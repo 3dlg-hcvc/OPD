@@ -1,0 +1,23 @@
+{
+    "train": {
+        "drawer": 27598,
+        "door": 17695,
+        "lid": 212,
+        "translation": 27540,
+        "rotation": 17965
+    },
+    "val": {
+        "drawer": 7324,
+        "door": 5311,
+        "lid": 152,
+        "translation": 7520,
+        "rotation": 5267
+    },
+    "test": {
+        "drawer": 7002,
+        "door": 4685,
+        "lid": 110,
+        "translation": 7002,
+        "rotation": 4795
+    }
+}

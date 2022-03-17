@@ -1,0 +1,5 @@
+_BASE_: "motionnet.yaml"
+MODEL:
+  MOTIONNET:
+    TYPE: BMOC_V0
+  MOTIONSTATE: True

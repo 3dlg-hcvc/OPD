@@ -1,0 +1,11 @@
+--find-links https://dl.fbaipublicfiles.com/detectron2/wheels/cu110/torch1.7/index.html
+detectron2==0.3
+opencv-python==4.5.1.48
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.7.1+cu110
+torchvision==0.8.2+cu110
+torchaudio===0.7.2
+# Below requirement is only for the visualization
+beautifulsoup4===4.9.3
+# Below requirement is for the data preprocessing
+h5py===3.5.0

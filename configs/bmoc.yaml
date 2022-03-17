@@ -1,0 +1,4 @@
+_BASE_: "motionnet.yaml"
+MODEL:
+  MOTIONNET:
+    TYPE: BMOC
