@@ -5,7 +5,7 @@ opencv-python==4.5.1.48
 torch==1.7.1+cu110
 torchvision==0.8.2+cu110
 torchaudio===0.7.2
-# Below requirement is only for the visualization
-beautifulsoup4===4.9.3
+tensorboard==2.7.0
 # Below requirement is for the data preprocessing
 h5py===3.5.0
+alive-progress==2.2.0
