@@ -2,9 +2,11 @@
 
 ## Overview 
 
-<p align="center"><img src="fig/input_output.pdf" width="100%"></p>
+<p align="center"><img src="fig/input_output.png" width="100%"></p>
 
-# Getting Started
+[Paper]()&nbsp; [Project]()
+
+## Getting Started
 
 Uses Detectron2 0.3 with PyTorch 1.7.1 and CUDA 11 on Ubuntu 20.04
 
