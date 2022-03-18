@@ -1,12 +1,13 @@
 # OPD: Single-view 3D Openable Part Detection
 
 ## Overview 
-
+This repository contains the implementation of **OPDRCNN**, a neural architecture that detects openable parts and predicts their motion parameters from a single-view image.
 <p align="center"><img src="fig/input_output.png" width="100%"></p>
 
 [Paper]()&nbsp; [Project]()
 
 ## Content
+- [Additional Repo](Additional-Repo)
 - [Setup](#Setup)
 - [Dataset](#Dataset)
 - [Pretrained Models](#Pretrained-Models)
@@ -14,17 +15,28 @@
 - [Evaluation](#Eveluation)
 - [Visualization](#Visualization)
 
+## Additional-Repo
+
+- ANCSH: We reimplement the ANCSH method using PyTorch for the paper "Category-Level Articulated Object Pose Estimation". For details, check the [ANCSH-pytorch](https://github.com/3dlg-hcvc/ANCSH-pytorch) repo.
+
+- OPDPN: We implement the OPDPN baseline (proposed in this paper). For details, check the [OPDPN](https://github.com/3dlg-hcvc/OPDPN) repo.
+
 ## Setup
+The implementation has been tested on Ubuntu 20.04, with PyTorch 1.7.1, CUDA 11 and CUDNN 8.0.3.
 
-Uses Detectron2 0.3 with PyTorch 1.7.1 and CUDA 11 on Ubuntu 20.04
-
+* Clone the repository
+```sh
+git clone git@github.com:3dlg-hcvc/OPD.git
 ```
-conda create -n 2dmotion python=3.7 
-conda activate 2dmotion  
+* Setup python environment
+```sh
+conda create -n opd python=3.7 
+conda activate opd  
 pip install -r requirements.txt
 ```
 
 ## Dataset
+You can simply download our [OPDSynth]() and [OPDReal]() datasets to **./dataset**
 
 ## Pretrained-Models
 
