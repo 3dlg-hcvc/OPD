@@ -6,7 +6,15 @@
 
 [Paper]()&nbsp; [Project]()
 
-## Getting Started
+## Content
+- [Setup](#Setup)
+- [Dataset](#Dataset)
+- [Pretrained Models](#Pretrained-Models)
+- [Training](#Training)
+- [Evaluation](#Eveluation)
+- [Visualization](#Visualization)
+
+## Setup
 
 Uses Detectron2 0.3 with PyTorch 1.7.1 and CUDA 11 on Ubuntu 20.04
 
@@ -15,6 +23,16 @@ conda create -n 2dmotion python=3.7
 conda activate 2dmotion  
 pip install -r requirements.txt
 ```
+
+## Dataset
+
+## Pretrained-Models
+
+## Training
+
+## Evaluation
+
+## Visualization
 
 # Configuration
 
