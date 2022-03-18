@@ -22,13 +22,7 @@ def setup_cfg(args):
     # Current use the statistics in train
     # 0: drawer, 1: door, 2: lid
     cfg.MODEL.most_frequent_type = [1, 0, 0]
-    # Below most_frequent_origin is deprecated
-    cfg.MODEL.most_frequent_origin = [
-        [0, 0, 0],
-        [0, 0, 0],
-        [-0.41908362, 0.53434741, 0.48216539],
-    ]
-    # Below is MF statistics on our synthetic data
+    # Below is MOSTFREQ statistics on our synthetic data
     cfg.MODEL.most_frequent_origin_NOC = [
         [0.0, 0.0, 0.0],
         [-0.5, 0.0, -0.5],
@@ -36,7 +30,7 @@ def setup_cfg(args):
     ]
     cfg.MODEL.most_frequent_axis = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
 
-    # Below is MF statistics on our real data
+    # Below is MOSTFREQ statistics on our real data
     # cfg.MODEL.most_frequent_origin_NOC = [
     #     [0.0, 0.0, -0.5],
     #     [0.5, 0.5, 0.0],
@@ -44,7 +38,7 @@ def setup_cfg(args):
     # ]
     # cfg.MODEL.most_frequent_axis = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
 
-    # The candidate axis and origins for BM-OC-MF-NOC-RM
+    # The candidate axis and origins for RANDMOT
     cfg.MODEL.canAxes_NOC = [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
     cfg.MODEL.canOrigins_NOC = [
         [0, 0, 0],
@@ -73,8 +67,6 @@ def setup_cfg(args):
 
     # Inference file
     cfg.INFERENCE_FILE = args.inference_file
-    # Filter file
-    cfg.FILTER_FILE = args.filter_file
 
     # Input format
     # TODO: maybe read from file
@@ -95,61 +87,26 @@ def setup_cfg(args):
     cfg.MODEL.AxisThres = args.motion_threshold[0]
     cfg.MODEL.OriginThres = args.motion_threshold[1]
 
-    # Option for testing
-    cfg.MODEL.MOST_FREQUENT_GT = args.most_frequent_gt
-    if args.most_frequent_gt:
-        args.gtbbx = True
-        args.gtcat = True
-        args.gtextrinsic = True
-
+    # Option for evaluation
     cfg.MODEL.MOST_FREQUENT_PRED = args.most_frequent_pred
 
     # Below two options is only for MOST_FREQUENT_PRED case
     cfg.MODEL.ORIGIN_NOC = args.origin_NOC
     cfg.MODEL.RANDOM_NOC = args.random_NOC
 
-    # if not cfg.MODEL.MOTIONNET.TYPE == "BMOC" and (
-    #     cfg.MODEL.MOST_FREQUENT_GT
-    #     or cfg.MODEL.MOST_FREQUENT_PRED
-    #     or cfg.MODEL.ORIGIN_NOC
-    #     or cfg.MODEL.RANDOM_NOC
-    # ):
-    #     raise ValueError("Invalid most frequent option for not BMOC model")
-
     cfg.MODEL.USE_GTBBX = args.gtbbx
     if args.gtbbx:
         cfg.MODEL.PROPOSAL_GENERATOR.NAME = "PrecomputedProposals"
-        # The below setting will only influence the training process
-        # cfg.MODEL.ROI_HEADS.PROPOSAL_APPEND_GT = False
 
     cfg.MODEL.USE_GTCAT = args.gtcat
 
     cfg.MODEL.USE_GTEXTRINSIC = args.gtextrinsic
-    # if not cfg.MODEL.MOTIONNET.TYPE == "BMOC" and cfg.MODEL.USE_GTEXTRINSIC:
-    #     raise ValueError("Invalid extrinsic option for not BMOC model")
-
-    cfg.MODEL.USE_GTPOSE = args.gtpose
-    if not cfg.MODEL.MOTIONNET.TYPE == "PM" and cfg.MODEL.USE_GTPOSE:
-        raise ValueError("Invalid pose option for not PM model")
 
     cfg.MODEL.MODELATTRPATH = args.model_attr_path
     if cfg.MODEL.MOTIONSTATE:
         cfg.MODEL.IMAGESTATEPATH = args.image_state_path
 
-    cfg.MODEL.RANDOM_BASELINE = args.random_baseline
-    if cfg.MODEL.RANDOM_BASELINE and (
-        cfg.MODEL.MOST_FREQUENT_GT or cfg.MODEL.MOST_FREQUENT_PRED
-    ):
-        raise ValueError(
-            "Invalid: use the random baseline and most frequent baseline at the same time"
-        )
-
-    if not cfg.MODEL.MOTIONNET.TYPE == "BMCC" and cfg.MODEL.RANDOM_BASELINE:
-        raise ValueError("Random baseline currently works for BMCC")
-
-    cfg.MODEL.TYPE_MATCH = args.type_match
     cfg.MODEL.PART_CAT = args.part_cat
-    cfg.MODEL.MICRO_AVG = args.micro_avg
 
     cfg.freeze()
     return cfg
@@ -216,75 +173,38 @@ def get_parser():
         action="store_true",
         help="indicating whether to use GT extrinsic for bmoc",
     )
-    # Deprecated gtpose -> not design corresponding ablation yet
-    parser.add_argument(
-        "--gtpose",
-        action="store_true",
-        help="indicating whether to use GT pose for pm",
-    )
-    # The below option will automatically load some sub option (For most fr)
-    # most_frequent_gt will automatically set gtbbx, gtcat & gtextrinsic to be true
-    parser.add_argument(
-        "--most_frequent_gt",
-        action="store_true",
-        help="indicating whether to choose most frequent baseline with gtbbx, gtcat & gtextrinsic. This option can only be used with BM-OC",
-    )
+
     # most_frequent_pred will only use the most frequent motion type/origin/axis
     parser.add_argument(
         "--most_frequent_pred",
         action="store_true",
-        help="indicating whether to choose most frequent baselien with predicted bbx, part label, extrinsic. This option can only be used with BM-OC",
+        help="indicating whether to choose most frequent baselien with predicted bbx, extrinsic. This option can only be used with OPDRCNN-O",
     )
     # most_frequent_pred origin will be in the normalized object coordinate if this is set to true
     parser.add_argument(
         "--origin_NOC",
         action="store_true",
-        help="indicating whether the most frequent origin is in NOC (normalized object coordinate). This option can only be used with BM-OC",
+        help="indicating whether the most frequent origin is in NOC (normalized object coordinate). This option can only be used with OPDRCNN-O",
     )
     parser.add_argument(
         "--random_NOC",
         action="store_true",
-        help="Randomly pick axis and origin from the most_frequent_candidates. This option can only be used with BM-OC",
+        help="Randomly pick axis and origin from the most_frequent_candidates. This option can only be used with OPDRCNN-O",
     )
     parser.add_argument(
         "--model_attr_path",
-        required=False,
-        default="/local-scratch/localhome/hja40/Desktop/Research/proj-motionnet/2DMotion/scripts/data/data_statistics/urdf-attr.json",
+        required=True,
         help="indicating the path to ",
     )
     parser.add_argument(
         "--image_state_path",
-        # default="/local-scratch/localhome/hja40/Desktop/Research/proj-motionnet/2DMotion/scripts/data/motion_state/image_close.json",
         help="indicating the path to part states for each image -> used to train and evaluate",
     )
-    # Deprecated random_baseline, not we use most_frequent_pred and random_NOC for the random baseline
-    parser.add_argument(
-        "--random_baseline",
-        action="store_true",
-        help="Assign random number to the motion axis, motion origin and motion type. This option can only be used with BM-CC",
-    )
     # The below option are for special evaluation metric
-    parser.add_argument(
-        "--type_match",
-        action="store_true",
-        help="indicating whether the evaluation metric for unmatched motion type is needed",
-    )
     parser.add_argument(
         "--part_cat",
         action="store_true",
         help="indicating whether the evaluation metric is for each part category (e.g. drawer, door, lid)",
-    )
-    parser.add_argument(
-        "--micro_avg",
-        action="store_true",
-        help="indicating whether micro-average is applied (statistics on all examples without considering part categories)",
-    )
-    # Additional file list used for the evaluation to use only part of the val set
-    parser.add_argument(
-        "--filter-file",
-        default=None,
-        metavar="FILE",
-        help="path to the filter file which includes part of the valid images",
     )
     return parser
 

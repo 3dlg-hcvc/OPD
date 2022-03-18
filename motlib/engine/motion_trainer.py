@@ -77,20 +77,10 @@ class MotionTrainer(DefaultTrainer):
             output_folder = os.path.join(cfg.OUTPUT_DIR, "inference")
 
         # MotionNet: Evaluation for motion data (Including traditional coco evaluation)
-        if "TYPE_MATCH" in cfg.MODEL:
-            type_match = cfg.MODEL.TYPE_MATCH
-        else:
-            type_match = False
-
         if "PART_CAT" in cfg.MODEL:
             part_cat = cfg.MODEL.PART_CAT
         else:
             part_cat = False
-
-        if "MICRO_AVG" in cfg.MODEL:
-            micro_avg = cfg.MODEL.MICRO_AVG
-        else:
-            micro_avg = False
 
         if "AxisThres" in cfg.MODEL:
             AxisThres = cfg.MODEL.AxisThres
@@ -114,9 +104,7 @@ class MotionTrainer(DefaultTrainer):
             output_folder,
             motionnet_type=cfg.MODEL.MOTIONNET.TYPE,
             MODELATTRPATH=cfg.MODEL.MODELATTRPATH,
-            TYPE_MATCH=type_match,
             PART_CAT=part_cat,
-            MICRO_AVG=micro_avg,
             AxisThres=AxisThres,
             OriginThres=OriginThres,
             motionstate=cfg.MODEL.MOTIONSTATE,
@@ -166,12 +154,8 @@ class MotionTrainer(DefaultTrainer):
                 inference_file = cfg.INFERENCE_FILE
             else:
                 inference_file = None
-            if "FILTER_FILE" in cfg:
-                filter_file = cfg.FILTER_FILE
-            else:
-                filter_file = None
             results_i = motion_inference_on_dataset(
-                model, data_loader, evaluator, inference_file, filter_file
+                model, data_loader, evaluator, inference_file
             )
             results[dataset_name] = results_i
             if comm.is_main_process():

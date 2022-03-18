@@ -19,7 +19,7 @@ Configuration files are in `configs/`
 
 MotionNet configuration
 * MODEL.MOTIONNET
-  * TYPE: BMOC | BMCC | PM
+  * TYPE: BMOC | BMCC
 * INPUT.FORMAT: RGB | RGBD | depth
 
 # Data
@@ -210,11 +210,8 @@ All library files are in `motilib/`
 	python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts most_frequent_pred random_NOC
 	python eval.py -ss finetuning -n 2dmotion
 	python eval.py -ss finetuning -n 2dmotion --opts gtbbx gtcat 
-	python eval.py -ss finetuning -ms oc_rgb -n 2dmotion --opts most_frequent_gt origin_NOC
-	python eval.py -ss finetuning -ms oc_rgb -n 2dmotion --opts most_frequent_gt random_NOC
 	python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts gtbbx gtcat gtextrinsic
 	python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts gtextrinsic 
-	python eval.py -ss finetuning -ms pm_rgb pm_depth pm_rgbd -n 2dmotion --opts gtpose
   ```
 
 * Visualization 

@@ -7,7 +7,6 @@ from detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
 
 from .bmcc_motion_output import MotionOutputLayers as BMCCOutputLayers
 from .bmoc_motion_output import MotionOutputLayers as BMOCOutputLayers
-from .pm_motion_output import MotionOutputLayers as PMOutputLayers
 
 import torch
 from typing import Dict, List, Optional, Tuple, Union
@@ -18,27 +17,13 @@ class MotionROIHeads(StandardROIHeads):
     @configurable
     def __init__(
         self,
-        # *,
-        # box_in_features: List[str],
-        # box_pooler: ROIPooler,
-        # box_head: nn.Module,
-        # box_predictor: nn.Module,
-        # mask_in_features: Optional[List[str]] = None,
-        # mask_pooler: Optional[ROIPooler] = None,
-        # mask_head: Optional[nn.Module] = None,
-        # keypoint_in_features: Optional[List[str]] = None,
-        # keypoint_pooler: Optional[ROIPooler] = None,
-        # keypoint_head: Optional[nn.Module] = None,
-        # train_on_pred_boxes: bool = False,
         use_GT = False,
-        freeze_DET=False,
         motionnet_type=None,
         use_GTBBX=False,
         *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.use_GT = use_GT
-        self.freeze_DET = freeze_DET
         self.motionnet_type = motionnet_type
         self.use_GTBBX = use_GTBBX
 
@@ -61,16 +46,6 @@ class MotionROIHeads(StandardROIHeads):
         else:
             use_GTEXTRINSIC = False
 
-        if "USE_GTPOSE" in cfg.MODEL:
-            use_GTPOSE = cfg.MODEL.USE_GTPOSE
-        else:
-            use_GTPOSE = False
-
-        if "FREEZE_DET" in cfg.MODEL:
-            freeze_DET = cfg.MODEL.FREEZE_DET
-        else:
-            freeze_DET = False
-
         if "ORIGIN_NOC" in cfg.MODEL:
             origin_NOC = cfg.MODEL.ORIGIN_NOC
         else:
@@ -82,10 +57,9 @@ class MotionROIHeads(StandardROIHeads):
             random_NOC = False
 
         # use_GT means that add gt to the inference 
-        use_GT = use_GTEXTRINSIC or use_GTPOSE or use_GTCAT or origin_NOC or random_NOC
+        use_GT = use_GTEXTRINSIC or use_GTCAT or origin_NOC or random_NOC
 
         ret["use_GT"] = use_GT
-        ret["freeze_DET"] = freeze_DET
         ret["motionnet_type"] = cfg.MODEL.MOTIONNET.TYPE
         ret["use_GTBBX"] = use_GTBBX
 
@@ -128,10 +102,7 @@ class MotionROIHeads(StandardROIHeads):
         output_layers = {
             "BMCC": BMCCOutputLayers,
             "BMOC": BMOCOutputLayers,
-            "PM": PMOutputLayers,
-            "PM_V0": PMOutputLayers,
             "BMOC_V0": BMOCOutputLayers,
-            "BMOC_V1": BMOCOutputLayers,
         }
         box_predictor = output_layers[cfg.MODEL.MOTIONNET.TYPE](cfg, box_head.output_shape)
 
@@ -275,9 +246,8 @@ class MotionROIHeads(StandardROIHeads):
             # Usually the original proposals used by the box head are used by the mask, keypoint
             # heads. But when `self.train_on_pred_boxes is True`, proposals will contain boxes
             # predicted by the box head.
-            if not self.freeze_DET:
-                losses.update(self._forward_mask(features, proposals))
-                losses.update(self._forward_keypoint(features, proposals))
+            losses.update(self._forward_mask(features, proposals))
+            losses.update(self._forward_keypoint(features, proposals))
             return proposals, losses
         else:
             pred_instances = self._forward_box(features, proposals, pred_extrinsics)
@@ -325,7 +295,7 @@ class MotionROIHeads(StandardROIHeads):
                         proposals_per_image.proposal_boxes = Boxes(pred_boxes_per_image)
             return losses
         else:
-            if "BMOC_V0" in self.motionnet_type or "BMOC_V1" in self.motionnet_type:
+            if "BMOC_V0" in self.motionnet_type:
                 pred_instances, _ = self.box_predictor.inference(predictions, proposals, pred_extrinsics)
             else:
                 pred_instances, _ = self.box_predictor.inference(predictions, proposals)

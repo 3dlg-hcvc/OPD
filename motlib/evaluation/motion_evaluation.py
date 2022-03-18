@@ -46,9 +46,7 @@ class MotionEvaluator(DatasetEvaluator):
         output_dir=None,
         motionnet_type="BMCC",
         MODELATTRPATH=None,
-        TYPE_MATCH=False,
         PART_CAT=False,
-        MICRO_AVG=False,
         AxisThres=10,
         OriginThres=0.25,
         motionstate=False,
@@ -64,38 +62,12 @@ class MotionEvaluator(DatasetEvaluator):
         self._metadata = MetadataCatalog.get(dataset_name)
         json_file = PathManager.get_local_path(self._metadata.json_file)
 
-        # Filter the image based on the filter file
-        if "FILTER_FILE" in cfg and not cfg.FILTER_FILE == None:
-            with open(cfg.FILTER_FILE, "r") as f:
-                selections = json.load(f)
-            dataset = json.load(open(json_file, "r"))
-            new_dataset = {
-                "annotations": [],
-                "categories": dataset["categories"],
-                "images": [],
-                "info": dataset["info"],
-                "licenses": dataset["licenses"],
-            }
-            useful_image_ids = []
-            for img in dataset["images"]:
-                if img["file_name"] in selections:
-                    new_dataset["images"].append(img)
-                    useful_image_ids.append(img["id"])
-            for anno in dataset["annotations"]:
-                if anno["image_id"] in useful_image_ids:
-                    new_dataset["annotations"].append(anno)
-            self._coco_api = COCO()
-            self._coco_api.dataset = new_dataset
-            self._coco_api.createIndex()
-        else:
-            with contextlib.redirect_stdout(io.StringIO()):
-                self._coco_api = COCO(json_file)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self._coco_api = COCO(json_file)
 
         self.motionnet_type = motionnet_type
         self.MODELATTRPATH = MODELATTRPATH
-        self.TYPE_MATCH = TYPE_MATCH
         self.PART_CAT = PART_CAT
-        self.MICRO_AVG = MICRO_AVG
         self.AxisThres = AxisThres
         self.OriginThres = OriginThres
         self.motionstate = motionstate
@@ -193,9 +165,7 @@ class MotionEvaluator(DatasetEvaluator):
                     task,
                     motionnet_type=self.motionnet_type,
                     MODELATTRPATH=self.MODELATTRPATH,
-                    TYPE_MATCH=self.TYPE_MATCH,
                     PART_CAT=self.PART_CAT,
-                    MICRO_AVG=self.MICRO_AVG,
                     AxisThres=self.AxisThres,
                     OriginThres=self.OriginThres,
                     motionstate=self.motionstate,
@@ -403,9 +373,7 @@ def _evaluate_predictions_on_motion(
     kpt_oks_sigmas=None,
     motionnet_type="BMCC",
     MODELATTRPATH=None,
-    TYPE_MATCH=False,
     PART_CAT=False,
-    MICRO_AVG=False,
     AxisThres=10,
     OriginThres=0.25,
     motionstate=False,
@@ -434,9 +402,7 @@ def _evaluate_predictions_on_motion(
         iou_type,
         motionnet_type=motionnet_type,
         MODELATTRPATH=MODELATTRPATH,
-        TYPE_MATCH=TYPE_MATCH,
         PART_CAT=PART_CAT,
-        MICRO_AVG=MICRO_AVG,
         MACRO_TYPE=False,
         AxisThres=AxisThres,
         OriginThres=OriginThres,
@@ -500,7 +466,7 @@ def _evaluate_predictions_on_motion(
 
 # Modify this function to support evaluating on existed inference file
 def motion_inference_on_dataset(
-    model, data_loader, evaluator, inference_file_path=None, filter_file_path=None
+    model, data_loader, evaluator, inference_file_path=None
 ):
     """
     Run model on the data_loader and evaluate the metrics with evaluator.
@@ -532,11 +498,6 @@ def motion_inference_on_dataset(
         assert ValueError("Motion Error: the evaluator is not corretly defined")
     evaluator.reset()
 
-    selections = None
-    if not filter_file_path == None:
-        with open(filter_file_path, "r") as f:
-            selections = json.load(f)
-
     if inference_file_path == None:
         num_warmup = min(5, total - 1)
         start_time = time.perf_counter()
@@ -551,11 +512,6 @@ def motion_inference_on_dataset(
                     start_time = time.perf_counter()
                     total_compute_time = 0
 
-                if not selections == None:
-                    # When inferencing, the batch size is always 1
-                    image_name = inputs[0]["file_name"].split("/")[-1]
-                    if image_name not in selections:
-                        continue
                 start_compute_time = time.perf_counter()
                 outputs = model(inputs)
                 if torch.cuda.is_available():

@@ -36,10 +36,8 @@ class MotionOutputs:
         smooth_l1_beta=0.0,
         box_reg_loss_type="smooth_l1",
         box_reg_loss_weight=1.0,
-        freeze_DET=False,
         motionnet_type=None,
         motionstate=False,
-        state_bgfg=False,
     ):
         """
         Args:
@@ -83,8 +81,6 @@ class MotionOutputs:
         self.motionnet_type = motionnet_type
         self.motionstate = motionstate
 
-        self.state_bgfg = state_bgfg
-
         self.image_shapes = [x.image_size for x in proposals]
 
         if len(proposals):
@@ -105,7 +101,7 @@ class MotionOutputs:
                 self.gt_types = cat([p.gt_types for p in proposals], dim=0)
                 self.gt_origins = cat([p.gt_origins for p in proposals], dim=0)
                 self.gt_axises = cat([p.gt_axises for p in proposals], dim=0)
-                if "BMOC_V0" not in self.motionnet_type and "BMOC_V1" not in self.motionnet_type:
+                if "BMOC_V0" not in self.motionnet_type:
                     self.gt_extrinsic = cat([p.gt_extrinsic for p in proposals], dim=0)
                 self.gt_motion_valids = cat(
                     [p.gt_motion_valids for p in proposals], dim=0
@@ -124,7 +120,6 @@ class MotionOutputs:
                 torch.zeros(0, 4, device=self.pred_proposal_deltas.device)
             )
         self._no_instances = len(proposals) == 0  # no instances found
-        self.freeze_DET = freeze_DET
 
     def _log_accuracy(self):
         """
@@ -265,14 +260,9 @@ class MotionOutputs:
             fg_inds = nonzero_tuple(
                 (self.gt_classes >= 0) & (self.gt_classes < bg_class_ind)
             )[0]
-            if self.state_bgfg:
-                return F.cross_entropy(
-                    self.pred_mstate[fg_inds], self.gt_states.long()[fg_inds], reduction="sum"
-                ) / self.gt_classes.numel()
-            else:
-                return F.cross_entropy(
-                    self.pred_mstate[fg_inds], self.gt_states.long()[fg_inds], reduction="mean"
-                )
+            return F.cross_entropy(
+                self.pred_mstate[fg_inds], self.gt_states.long()[fg_inds], reduction="sum"
+            ) / self.gt_classes.numel()
 
     # MotionNet: add new losses for mtype, morigin, maxis
     def mtype_loss(self):
@@ -384,12 +374,9 @@ class MotionOutputs:
         """
         # MotionNet: log the motion accuracy for training dataset
         self._log_motion()
-        if self.freeze_DET:
-            loss_cls = torch.tensor(0.0, device=self.gt_classes.device)
-            loss_box_reg = torch.tensor(0.0, device=self.gt_classes.device)
-        else:
-            loss_cls = self.softmax_cross_entropy_loss()
-            loss_box_reg = self.box_reg_loss()
+        
+        loss_cls = self.softmax_cross_entropy_loss()
+        loss_box_reg = self.box_reg_loss()
 
         losses = {
             "loss_cls": loss_cls,
@@ -399,7 +386,7 @@ class MotionOutputs:
             "loss_maxis": self.maxis_loss(),
         }
 
-        if "BMOC_V0" not in self.motionnet_type and "BMOC_V1" not in self.motionnet_type:
+        if "BMOC_V0" not in self.motionnet_type:
             losses["loss_extrinsic"] = self.extrinsic_loss()
         
         if self.motionstate:
@@ -458,10 +445,7 @@ class MotionOutputLayers(nn.Module):
         use_GTBBX=False,
         use_GTEXTRINSIC=False,
         use_GTCAT=False,
-        freeze_DET=False,
-        most_frequent_gt=False,
         most_frequent_type=None,
-        most_frequent_origin=None,
         most_frequent_axis=None,
         most_frequent_pred=False,
         origin_NOC=False,
@@ -472,7 +456,6 @@ class MotionOutputLayers(nn.Module):
         MODELATTRPATH=None,
         motionnet_type=None,
         motionstate=False,
-        state_bgfg=False,
     ):
         """
         NOTE: this interface is experimental.
@@ -576,7 +559,7 @@ class MotionOutputLayers(nn.Module):
             nn.ReLU(inplace=True),
             Linear(32, 3),
         )
-        if "BMOC_V0" not in self.motionnet_type and "BMOC_V1" not in self.motionnet_type:
+        if "BMOC_V0" not in self.motionnet_type:
             self.extrinsic_layer = nn.Sequential(
                 Linear(input_size, 512),
                 nn.ReLU(inplace=True),
@@ -621,11 +604,8 @@ class MotionOutputLayers(nn.Module):
         self.use_GTBBX = use_GTBBX
         self.use_GTEXTRINSIC = use_GTEXTRINSIC
         self.use_GTCAT = use_GTCAT
-        self.freeze_DET = freeze_DET
-        self.most_frequent_gt = most_frequent_gt
 
         self.most_frequent_type = most_frequent_type
-        self.most_frequent_origin = most_frequent_origin
         self.most_frequent_axis = most_frequent_axis
         self.most_frequent_pred = most_frequent_pred
 
@@ -638,8 +618,6 @@ class MotionOutputLayers(nn.Module):
 
         self.MODELATTRPATH = MODELATTRPATH
         self.motionstate = motionstate
-
-        self.state_bgfg = state_bgfg
 
     @classmethod
     def from_config(cls, cfg, input_shape):
@@ -658,28 +636,16 @@ class MotionOutputLayers(nn.Module):
         else:
             use_GTEXTRINSIC = False
 
-        if "FREEZE_DET" in cfg.MODEL:
-            freeze_DET = cfg.MODEL.FREEZE_DET
-        else:
-            freeze_DET = False
-
-        if "MOST_FREQUENT_GT" in cfg.MODEL:
-            most_frequent_gt = cfg.MODEL.MOST_FREQUENT_GT
-        else:
-            most_frequent_gt = False
-
         if "MOST_FREQUENT_PRED" in cfg.MODEL:
             most_frequent_pred = cfg.MODEL.MOST_FREQUENT_PRED
         else:
             most_frequent_pred = False
 
-        if most_frequent_gt or most_frequent_pred:
+        if most_frequent_pred:
             most_frequent_type = cfg.MODEL.most_frequent_type
-            most_frequent_origin = cfg.MODEL.most_frequent_origin
             most_frequent_axis = cfg.MODEL.most_frequent_axis
         else:
             most_frequent_type = None
-            most_frequent_origin = None
             most_frequent_axis = None
 
         if "ORIGIN_NOC" in cfg.MODEL:
@@ -704,11 +670,6 @@ class MotionOutputLayers(nn.Module):
             canAxes_NOC = None
             canOrigins_NOC = None
 
-        if "STATE_BGFG" in cfg.MODEL:
-            state_bgfg = cfg.MODEL.STATE_BGFG
-        else:
-            state_bgfg = False
-
         return {
             "input_shape": input_shape,
             "box2box_transform": Box2BoxTransform(
@@ -727,10 +688,7 @@ class MotionOutputLayers(nn.Module):
             "use_GTBBX": use_GTBBX,
             "use_GTCAT": use_GTCAT,
             "use_GTEXTRINSIC": use_GTEXTRINSIC,
-            "freeze_DET": freeze_DET,
-            "most_frequent_gt": most_frequent_gt,
             "most_frequent_type": most_frequent_type,
-            "most_frequent_origin": most_frequent_origin,
             "most_frequent_axis": most_frequent_axis,
             "most_frequent_pred": most_frequent_pred,
             "origin_NOC": origin_NOC,
@@ -741,7 +699,6 @@ class MotionOutputLayers(nn.Module):
             "MODELATTRPATH": cfg.MODEL.MODELATTRPATH,
             "motionnet_type": cfg.MODEL.MOTIONNET.TYPE,
             "motionstate": cfg.MODEL.MOTIONSTATE,
-            "state_bgfg": state_bgfg
         }
 
     def getModifiedBound(self):
@@ -778,15 +735,13 @@ class MotionOutputLayers(nn.Module):
         scores = self.cls_score(x)
         proposal_deltas = self.bbox_pred(x)
         # Predict the value for the motion type, motion origin and motion axis
-        if self.freeze_DET:
-            x = x.detach()
         mstate = None
         if self.motionstate:
             mstate = self.mstate_layer(x)
         mtype = self.mtype_layer(x)
         morigin = self.morigin_layer(x)
         maxis = self.maxis_layer(x)
-        if "BMOC_V0" not in self.motionnet_type and "BMOC_V1" not in self.motionnet_type:
+        if "BMOC_V0" not in self.motionnet_type:
             extrinsic = self.extrinsic_layer(x)
         else:
             extrinsic = None
@@ -815,10 +770,8 @@ class MotionOutputLayers(nn.Module):
             self.smooth_l1_beta,
             self.box_reg_loss_type,
             self.box_reg_loss_weight,
-            self.freeze_DET,
             self.motionnet_type,
             self.motionstate,
-            self.state_bgfg,
         ).losses()
 
     # MotionNet: functions used when testing
@@ -978,7 +931,7 @@ class MotionOutputLayers(nn.Module):
         scores, proposal_deltas, mtype, morigin, maxis, mextrinsic, mstate = predictions
         num_inst_per_image = [len(p) for p in proposals]
 
-        if "BMOC_V0" in self.motionnet_type or "BMOC_V1" in self.motionnet_type:
+        if "BMOC_V0" in self.motionnet_type:
             assert mextrinsic == None
             assert not pred_extrinsics == None
             assert len(proposals) == pred_extrinsics.size(0)
@@ -993,89 +946,6 @@ class MotionOutputLayers(nn.Module):
             )
 
         assert not mextrinsic == None
-
-        if self.most_frequent_gt:
-            most_frequent_type = torch.tensor(
-                self.most_frequent_type, device=scores.device
-            )
-            most_frequent_axis = torch.tensor(
-                self.most_frequent_axis, device=scores.device, dtype=torch.float32
-            )
-            gt_classes = cat([p.gt_classes for p in proposals], dim=0)
-            # Process the mtype
-            frequent_type = most_frequent_type[gt_classes]
-            mtype = torch.zeros(mtype.size(), device=mtype.device, dtype=torch.float32)
-            mtype[range(mtype.size(0)), frequent_type] = 1
-            # Process the morigin
-            if not self.origin_NOC and not self.random_NOC:
-                most_frequent_origin = torch.tensor(
-                    self.most_frequent_origin, device=scores.device, dtype=torch.float32
-                )
-                morigin = most_frequent_origin[gt_classes]
-                # Process the maxis
-                maxis = most_frequent_axis[gt_classes]
-            elif self.random_NOC:
-                modified_bound = self.getModifiedBound()
-                # Pick a random normalized origin and scale it back to the world coordinate
-                canOrigins_NOC = torch.tensor(
-                    self.canOrigins_NOC, device=scores.device, dtype=torch.float32
-                )
-                gt_model_name = cat([p.gt_model_name for p in proposals], dim=0)
-                min_bound = torch.tensor(
-                    [
-                        modified_bound[str(model_name)]["min_bound"]
-                        for model_name in gt_model_name.cpu().numpy()
-                    ],
-                    device=mtype.device,
-                    dtype=torch.float32,
-                )
-                scale_factor = torch.tensor(
-                    [
-                        modified_bound[str(model_name)]["scale_factor"]
-                        for model_name in gt_model_name.cpu().numpy()
-                    ],
-                    device=mtype.device,
-                    dtype=torch.float32,
-                )
-                random_origin_index = torch.randint(0, 19, (gt_classes.size(0),))
-                morigin = (
-                    canOrigins_NOC[random_origin_index] + 0.5
-                ) * scale_factor + min_bound
-                # pick a random axis from the candidate axes
-                canAxes_NOC = torch.tensor(
-                    self.canAxes_NOC, device=scores.device, dtype=torch.float32
-                )
-                random_axes_index = torch.randint(0, 3, (gt_classes.size(0),))
-                maxis = canAxes_NOC[random_axes_index]
-            else:
-                modified_bound = self.getModifiedBound()
-                most_frequent_origin_NOC = torch.tensor(
-                    self.most_frequent_origin_NOC,
-                    device=scores.device,
-                    dtype=torch.float32,
-                )
-                gt_model_name = cat([p.gt_model_name for p in proposals], dim=0)
-                min_bound = torch.tensor(
-                    [
-                        modified_bound[str(model_name)]["min_bound"]
-                        for model_name in gt_model_name.cpu().numpy()
-                    ],
-                    device=mtype.device,
-                    dtype=torch.float32,
-                )
-                scale_factor = torch.tensor(
-                    [
-                        modified_bound[str(model_name)]["scale_factor"]
-                        for model_name in gt_model_name.cpu().numpy()
-                    ],
-                    device=mtype.device,
-                    dtype=torch.float32,
-                )
-                morigin = (
-                    most_frequent_origin_NOC[gt_classes] + 0.5
-                ) * scale_factor + min_bound
-                # Process the maxis
-                maxis = most_frequent_axis[gt_classes]
 
         if self.most_frequent_pred:
             try:
@@ -1098,16 +968,7 @@ class MotionOutputLayers(nn.Module):
                 )
                 mtype[range(mtype.size(0)), frequent_type] = 1
                 # Process the morigin
-                if not self.origin_NOC and not self.random_NOC:
-                    most_frequent_origin = torch.tensor(
-                        self.most_frequent_origin,
-                        device=scores.device,
-                        dtype=torch.float32,
-                    )
-                    morigin = most_frequent_origin[pred_classes]
-                    # Process the maxis
-                    maxis = most_frequent_axis[pred_classes]
-                elif self.random_NOC:
+                if self.random_NOC:
                     modified_bound = self.getModifiedBound()
                     # Pick a random normalized origin and scale it back to the world coordinate
                     canOrigins_NOC = torch.tensor(

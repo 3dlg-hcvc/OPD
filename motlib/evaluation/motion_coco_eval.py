@@ -98,7 +98,7 @@ class MotionCocoEval:
     # Data, paper, and tutorials available at:  http://mscoco.org/
     # Code written by Piotr Dollar and Tsung-Yi Lin, 2015.
     # Licensed under the Simplified BSD License [see coco/license.txt]
-    def __init__(self, cocoGt=None, cocoDt=None, iouType="segm", motionnet_type="BMCC", MODELATTRPATH=None, TYPE_MATCH=False, PART_CAT=False, MICRO_AVG=False, MACRO_TYPE=False, AxisThres=10, OriginThres=0.25, motionstate=False, image_state_path=None):
+    def __init__(self, cocoGt=None, cocoDt=None, iouType="segm", motionnet_type="BMCC", MODELATTRPATH=None, PART_CAT=False, MACRO_TYPE=False, AxisThres=10, OriginThres=0.25, motionstate=False, image_state_path=None):
         """
         Initialize CocoEval using coco APIs for gt and dt
         :param cocoGt: coco object with ground truth annotations
@@ -116,10 +116,6 @@ class MotionCocoEval:
         self._gts = defaultdict(list)  # gt for evaluation
         self._dts = defaultdict(list)  # dt for evaluation
         self.params = Params(iouType=iouType)  # parameters
-        
-        self.MICRO_AVG = MICRO_AVG
-        if MICRO_AVG == True:
-            self.params.useCats = 0
 
         self._paramsEval = {}  # parameters for evaluation
         self.stats = []  # result summarization
@@ -132,7 +128,6 @@ class MotionCocoEval:
         self.motionnet_type = motionnet_type
         self.MODELATTRPATH = MODELATTRPATH
         self.diagonal_length = self.getDiagLength()
-        self.TYPE_MATCH = TYPE_MATCH
         self.PART_CAT = PART_CAT
         self.MACRO_TYPE = MACRO_TYPE
         self.AxisThres = AxisThres
@@ -373,13 +368,6 @@ class MotionCocoEval:
         gtType = np.array([MOTION_TYPE[g["motion"]["type"]] for g in gt])
         dtIg = np.zeros((T, D))
         # MotionNet
-        if self.motionnet_type == "PM":
-            dtPDim = np.zeros((T, D))
-            dtPTrans = np.zeros((T, D))
-            dtPRot = np.zeros((T, D))
-            dtPDimThres = np.zeros((T, D))
-            dtPTransThres = np.zeros((T, D))
-            dtPRotThres = np.zeros((T, D))
         if self.motionnet_type == "BMOC":
             dtOriginWorld = np.zeros((T, D))
             dtAxisWorld = np.zeros((T, D))
@@ -420,57 +408,6 @@ class MotionCocoEval:
 
                     model_name = self.cocoGt.loadImgs(int(gt[m]["image_id"]))[0]['file_name'].split('-')[0]
                     diagonal_length = self.diagonal_length[model_name]
-                    # dtModels = []
-                    # for e in E:
-                    #     dtModels.append(self.cocoGt.loadImgs(int(e["image_id"]))[0]['file_name'].split('-')[0])
-
-                    # MotionNet Pose Evaluation for PM
-                    # Calculate the pose dimension MSE
-                    if self.motionnet_type == "PM":
-                        gt_dimension = np.array(
-                            gt[m]["motion"]["partPose"]["dimension"]
-                        )
-                        pred_dimension = np.array(d["pdim"])
-                        dtPDim[tind, dind] = (
-                            (pred_dimension - gt_dimension) ** 2
-                        ).sum() ** 0.5 / diagonal_length
-                        # Calculate the pose translation MSE
-                        gt_trans = np.array(gt[m]["motion"]["partPose"]["translation"])
-                        pred_trans = np.array(d["ptrans"])
-                        dtPTrans[tind, dind] = (
-                            (pred_trans - gt_trans) ** 2
-                        ).sum() ** 0.5 / diagonal_length
-                        # Calcualte the average degree error of the three main axis
-                        # gt_rot and pred_rot stores [x, y, z] in Euler ZYX form
-                        gt_rot = np.array(gt[m]["motion"]["partPose"]["rotation"])
-                        pred_rot = np.array(d["prot"])
-                        # Change them in to the rotation matrix
-                        gt_rot_mat = ZYX2Mat(gt_rot)
-                        pred_rot_mat = ZYX2Mat(pred_rot)
-                        # Apply the rotation matrix on three base
-                        raw_base_vectors = np.eye(3)
-                        gt_base = np.matmul(gt_rot_mat, raw_base_vectors)
-                        pred_base = np.matmul(pred_rot_mat, raw_base_vectors)
-                        dtPRot[tind, dind] = (
-                            getDegreeFromAxes(gt_base[:, 0], pred_base[:, 0])
-                            + getDegreeFromAxes(gt_base[:, 1], pred_base[:, 1])
-                            + getDegreeFromAxes(gt_base[:, 2], pred_base[:, 2])
-                        ) / 3
-
-                        if dtPDim[tind, dind] <= self.OriginThres:
-                            dtPDimThres[tind, dind] = 1
-                        else:
-                            dtPDimThres[tind, dind] = 0
-
-                        if dtPTrans[tind, dind] <= self.OriginThres:
-                            dtPTransThres[tind, dind] = 1
-                        else:
-                            dtPTransThres[tind, dind] = 0
-
-                        if dtPRot[tind, dind] <= self.AxisThres:
-                            dtPRotThres[tind, dind] = 1
-                        else:
-                            dtPRotThres[tind, dind] = 0
 
                     if self.motionstate:
                         image_name = self.cocoGt.loadImgs(int(gt[m]["image_id"]))[0]['file_name'].split('.')[0]
@@ -614,17 +551,6 @@ class MotionCocoEval:
             "dtAxisThres": dtAxisThres,
         }
 
-        if self.motionnet_type == "PM":
-            result.update(
-                {
-                    "dtPDim": dtPDim,
-                    "dtPTrans": dtPTrans,
-                    "dtPRot": dtPRot,
-                    "dtPDimThres": dtPDimThres,
-                    "dtPTransThres": dtPTransThres,
-                    "dtPRotThres": dtPRotThres,
-                }
-            )
         if self.motionnet_type == "BMOC":
             result.update({"dtOriginWorld": dtOriginWorld, "dtAxisWorld": dtAxisWorld})
         if self.motionstate:
@@ -662,20 +588,6 @@ class MotionCocoEval:
         axis_scores = -np.ones((T, K, A, M))
         axis_rot_scores = -np.ones((T, K, A, M))
         axis_trans_scores = -np.ones((T, K, A, M))
-
-        if self.TYPE_MATCH:
-            mis_origin_scores = -np.ones((T, K, A, M))
-            mis_axis_scores = -np.ones((T, K, A, M))
-            mis_axis_rot_scores = -np.ones((T, K, A, M))
-            mis_axis_trans_scores = -np.ones((T, K, A, M))
-
-        if self.motionnet_type == "PM":
-            pdim_scores = -np.ones((T, K, A, M))
-            ptrans_scores = -np.ones((T, K, A, M))
-            prot_scores = -np.ones((T, K, A, M))
-            mPDP = -np.ones((T, R, K, A, M))
-            mPTP = -np.ones((T, R, K, A, M))
-            mPRP = -np.ones((T, R, K, A, M))
 
         if self.motionnet_type == "BMOC":
             origin_world_scores = -np.ones((T, K, A, M))
@@ -791,22 +703,12 @@ class MotionCocoEval:
                     dtAxis_rot_sum = np.zeros(np.shape(dtAxis))
                     dtAxis_trans_sum = np.zeros(np.shape(dtAxis))
 
-                    if self.TYPE_MATCH:
-                        dtMisOrigin_sum = np.zeros(np.shape(dtOrigin))
-                        dtMisAxis_sum = np.zeros(np.shape(dtAxis))
-                        dtMisAxis_rot_sum = np.zeros(np.shape(dtAxis))
-                        dtMisAxis_trans_sum = np.zeros(np.shape(dtAxis))
-
                     for t in range(np.shape(dtType)[0]):
                         valid_type_number = 0
                         valid_axis_number = 0
                         valid_rot_number = 0
                         valid_trans_number = 0
 
-                        if self.TYPE_MATCH:
-                            mis_axis_number = 0
-                            mis_rot_number = 0
-                            mis_trans_number = 0
                         for d in range(np.shape(dtType)[1]):
                             if d == 0:
                                 if dtm[t, d] != 0 and dtIg[t, d] == 0:
@@ -824,19 +726,6 @@ class MotionCocoEval:
                                             valid_trans_number += 1
                                             dtAxis_trans_sum[t, d] = dtAxis[t, d]
                                         dtAxis_sum[t, d] = dtAxis[t, d]
-                                    else:
-                                        if self.TYPE_MATCH:
-                                            mis_axis_number += 1
-                                            if rotType[t, d] == MOTION_TYPE["rotation"]:
-                                                mis_rot_number += 1
-                                                dtMisOrigin_sum[t, d] = dtOrigin[t, d]
-                                                dtMisAxis_rot_sum[t, d] = dtAxis[t, d]
-                                            elif (
-                                                rotType[t, d] == MOTION_TYPE["translation"]
-                                            ):
-                                                mis_trans_number += 1
-                                                dtMisAxis_trans_sum[t, d] = dtAxis[t, d]
-                                            dtMisAxis_sum[t, d] = dtAxis[t, d]
                             else:
                                 if dtm[t, d] != 0 and dtIg[t, d] == 0:
                                     valid_type_number += 1
@@ -889,14 +778,6 @@ class MotionCocoEval:
                                             dtAxis_rot_sum[t, d] = dtAxis_rot_sum[
                                                 t, d - 1
                                             ]
-
-                                        if self.TYPE_MATCH:
-                                            dtMisOrigin_sum[t, d] = dtMisOrigin_sum[t, d - 1]
-                                            dtMisAxis_sum[t, d] = dtMisAxis_sum[t, d - 1]
-                                            dtMisAxis_rot_sum[t, d] = dtMisAxis_rot_sum[t, d - 1]
-                                            dtMisAxis_trans_sum[t, d] = dtMisAxis_trans_sum[
-                                                t, d - 1
-                                            ]
                                     else:
                                         dtOrigin_sum[t, d] = dtOrigin_sum[t, d - 1]
                                         dtAxis_sum[t, d] = dtAxis_sum[t, d - 1]
@@ -905,64 +786,12 @@ class MotionCocoEval:
                                             t, d - 1
                                         ]
 
-                                        if self.TYPE_MATCH:
-                                            mis_axis_number += 1
-                                            dtMisAxis_sum[t, d] = (
-                                                dtMisAxis_sum[t, d - 1]
-                                                + (dtAxis[t, d] - dtMisAxis_sum[t, d - 1])
-                                                / mis_axis_number
-                                            )
-                                            if rotType[t, d] == MOTION_TYPE["rotation"]:
-                                                mis_rot_number += 1
-                                                dtMisOrigin_sum[t, d] = (
-                                                    dtMisOrigin_sum[t, d - 1]
-                                                    + (
-                                                        dtOrigin[t, d]
-                                                        - dtMisOrigin_sum[t, d - 1]
-                                                    )
-                                                    / mis_rot_number
-                                                )
-                                                dtMisAxis_rot_sum[t, d] = (
-                                                    dtMisAxis_rot_sum[t, d - 1]
-                                                    + (
-                                                        dtAxis[t, d]
-                                                        - dtMisAxis_rot_sum[t, d - 1]
-                                                    )
-                                                    / mis_rot_number
-                                                )
-                                                dtMisAxis_trans_sum[t, d] = dtMisAxis_trans_sum[
-                                                    t, d - 1
-                                                ]
-                                            elif (
-                                                rotType[t, d] == MOTION_TYPE["translation"]
-                                            ):
-                                                mis_trans_number += 1
-                                                dtMisOrigin_sum[t, d] = dtMisOrigin_sum[t, d - 1]
-                                                dtMisAxis_trans_sum[t, d] = (
-                                                    dtMisAxis_trans_sum[t, d - 1]
-                                                    + (
-                                                        dtAxis[t, d]
-                                                        - dtMisAxis_trans_sum[t, d - 1]
-                                                    )
-                                                    / mis_trans_number
-                                                )
-                                                dtMisAxis_rot_sum[t, d] = dtMisAxis_rot_sum[
-                                                    t, d - 1
-                                                ]
                                 else:
                                     dtType_sum[t, d] = dtType_sum[t, d - 1]
                                     dtOrigin_sum[t, d] = dtOrigin_sum[t, d - 1]
                                     dtAxis_sum[t, d] = dtAxis_sum[t, d - 1]
                                     dtAxis_rot_sum[t, d] = dtAxis_rot_sum[t, d - 1]
                                     dtAxis_trans_sum[t, d] = dtAxis_trans_sum[t, d - 1]
-
-                                    if self.TYPE_MATCH:
-                                        dtMisOrigin_sum[t, d] = dtMisOrigin_sum[t, d - 1]
-                                        dtMisAxis_sum[t, d] = dtMisAxis_sum[t, d - 1]
-                                        dtMisAxis_rot_sum[t, d] = dtMisAxis_rot_sum[t, d - 1]
-                                        dtMisAxis_trans_sum[t, d] = dtMisAxis_trans_sum[
-                                            t, d - 1
-                                        ]
 
                         if valid_type_number == 0:
                             nIns_precision_type[t, k, a, m] = -1
@@ -994,14 +823,6 @@ class MotionCocoEval:
                                 dtAxis_rot_sum[t, np.shape(dtType)[1] - 1] = -1
                             if valid_trans_number == 0:
                                 dtAxis_trans_sum[t, np.shape(dtType)[1] - 1] = -1
-                            if self.TYPE_MATCH:
-                                if mis_axis_number == 0:
-                                    dtMisAxis_sum[t, np.shape(dtType)[1] - 1] = -1
-                                if mis_rot_number == 0:
-                                    dtMisOrigin_sum[t, np.shape(dtType)[1] - 1] = -1
-                                    dtMisAxis_rot_sum[t, np.shape(dtType)[1] - 1] = -1
-                                if mis_trans_number == 0:
-                                    dtMisAxis_trans_sum[t, np.shape(dtType)[1] - 1] = -1
                         except:
                             # When training, at the start, some category may be missing, which may cause problems
                             pass
@@ -1133,118 +954,6 @@ class MotionCocoEval:
                             matched_trans_number[np.where(matched_trans_number == -1)] = 0
                             total_axis_trans_scores[:, k, a, m] = (dtAxis_trans_sum[:, -1] * matched_trans_number + 90.0 * (nIns_total_pred_trans[:, k, a, m] - matched_trans_number)) / nIns_total_pred_trans[:, k, a, m]
 
-                    if self.motionnet_type == "PM":
-                        # Calculated the errors of poses for matched cases
-                        dtPDim = np.concatenate(
-                            [e["dtPDim"][:, 0:maxDet] for e in E], axis=1
-                        )[:, inds]
-                        dtPTrans = np.concatenate(
-                            [e["dtPTrans"][:, 0:maxDet] for e in E], axis=1
-                        )[:, inds]
-                        dtPRot = np.concatenate(
-                            [e["dtPRot"][:, 0:maxDet] for e in E], axis=1
-                        )[:, inds]
-                        dtPDimThres = np.concatenate(
-                            [e["dtPDimThres"][:, 0:maxDet] for e in E], axis=1
-                        )[:, inds]
-                        dtPTransThres = np.concatenate(
-                            [e["dtPTransThres"][:, 0:maxDet] for e in E], axis=1
-                        )[:, inds]
-                        dtPRotThres = np.concatenate(
-                            [e["dtPRotThres"][:, 0:maxDet] for e in E], axis=1
-                        )[:, inds]
-
-                        dtPDim_sum = np.zeros(np.shape(dtPDim))
-                        dtPTrans_sum = np.zeros(np.shape(dtPTrans))
-                        dtPRot_sum = np.zeros(np.shape(dtPRot))
-
-                        for t in range(np.shape(dtPDim)[0]):
-                            valid_pose_number = 0
-                            for d in range(np.shape(dtPDim_sum)[1]):
-                                if d == 0:
-                                    if dtm[t, d] != 0 and dtIg[t, d] == 0:
-                                        valid_pose_number += 1
-                                        dtPDim_sum[t, d] = dtPDim[t, d]
-                                        dtPTrans_sum[t, d] = dtPTrans_sum[t, d]
-                                        dtPRot_sum[t, d] = dtPRot_sum[t, d]
-                                else:
-                                    if dtm[t, d] != 0 and dtIg[t, d] == 0:
-                                        valid_pose_number += 1
-                                        dtPDim_sum[t, d] = (
-                                            dtPDim_sum[t, d - 1]
-                                            + (dtPDim[t, d] - dtPDim_sum[t, d - 1])
-                                            / valid_pose_number
-                                        )
-                                        dtPTrans_sum[t, d] = (
-                                            dtPTrans_sum[t, d - 1]
-                                            + (dtPTrans[t, d] - dtPTrans_sum[t, d - 1])
-                                            / valid_pose_number
-                                        )
-                                        dtPRot_sum[t, d] = (
-                                            dtPRot_sum[t, d - 1]
-                                            + (dtPRot[t, d] - dtPRot_sum[t, d - 1])
-                                            / valid_pose_number
-                                        )
-                                    else:
-                                        dtPDim_sum[t, d] = dtPDim_sum[t, d - 1]
-                                        dtPTrans_sum[t, d] = dtPTrans_sum[t, d - 1]
-                                        dtPRot_sum[t, d] = dtPRot_sum[t, d - 1]
-                            try:
-                                if valid_pose_number == 0:
-                                    dtPDim_sum[t, np.shape(dtPDim_sum)[1] - 1] = -1
-                                    dtPTrans_sum[t, np.shape(dtPTrans_sum)[1] - 1] = -1
-                                    dtPRot_sum[t, np.shape(dtPRot_sum)[1] - 1] = -1
-                            except:
-                                pass
-
-                        dtPDimThres_tps = np.logical_and(
-                            np.logical_and(dtm, dtPDimThres), np.logical_not(dtIg)
-                        )
-                        dtPDimThres_fps = np.logical_and(
-                            np.logical_or(
-                                np.logical_not(dtm), np.logical_not(dtPDimThres)
-                            ),
-                            np.logical_not(dtIg),
-                        )
-                        dtPDimThres_tp_sum = np.cumsum(dtPDimThres_tps, axis=1).astype(
-                            dtype=np.float
-                        )
-                        dtPDimThres_fp_sum = np.cumsum(dtPDimThres_fps, axis=1).astype(
-                            dtype=np.float
-                        )
-
-                        dtPTransThres_tps = np.logical_and(
-                            np.logical_and(dtm, dtPTransThres), np.logical_not(dtIg)
-                        )
-                        dtPTransThres_fps = np.logical_and(
-                            np.logical_or(
-                                np.logical_not(dtm), np.logical_not(dtPTransThres)
-                            ),
-                            np.logical_not(dtIg),
-                        )
-                        dtPTransThres_tp_sum = np.cumsum(
-                            dtPTransThres_tps, axis=1
-                        ).astype(dtype=np.float)
-                        dtPTransThres_fp_sum = np.cumsum(
-                            dtPTransThres_fps, axis=1
-                        ).astype(dtype=np.float)
-
-                        dtPRotThres_tps = np.logical_and(
-                            np.logical_and(dtm, dtPRotThres), np.logical_not(dtIg)
-                        )
-                        dtPRotThres_fps = np.logical_and(
-                            np.logical_or(
-                                np.logical_not(dtm), np.logical_not(dtPRotThres)
-                            ),
-                            np.logical_not(dtIg),
-                        )
-                        dtPRotThres_tp_sum = np.cumsum(dtPRotThres_tps, axis=1).astype(
-                            dtype=np.float
-                        )
-                        dtPRotThres_fp_sum = np.cumsum(dtPRotThres_fps, axis=1).astype(
-                            dtype=np.float
-                        )
-
                     if self.motionnet_type == "BMOC":
                         dtOriginWorld = np.concatenate(
                             [e["dtOriginWorld"][:, 0:maxDet] for e in E], axis=1
@@ -1345,17 +1054,6 @@ class MotionCocoEval:
                             axis_rot_scores[t, k, a, m] = dtAxis_rot_sum[t, -1]
                             axis_trans_scores[t, k, a, m] = dtAxis_trans_sum[t, -1]
 
-                            if self.TYPE_MATCH:
-                                mis_origin_scores[t, k, a, m] = dtMisOrigin_sum[t, -1]
-                                mis_axis_scores[t, k, a, m] = dtMisAxis_sum[t, -1]
-                                mis_axis_rot_scores[t, k, a, m] = dtMisAxis_rot_sum[t, -1]
-                                mis_axis_trans_scores[t, k, a, m] = dtMisAxis_trans_sum[t, -1]
-
-                            if self.motionnet_type == "PM":
-                                pdim_scores[t, k, a, m] = dtPDim_sum[t, -1]
-                                ptrans_scores[t, k, a, m] = dtPTrans_sum[t, -1]
-                                prot_scores[t, k, a, m] = dtPRot_sum[t, -1]
-
                             if self.motionnet_type == "BMOC":
                                 origin_world_scores[t, k, a, m] = dtOriginWorld_sum[
                                     t, -1
@@ -1363,72 +1061,6 @@ class MotionCocoEval:
                                 axis_world_scores[t, k, a, m] = dtAxisWorld_sum[t, -1]
                         except:
                             pass
-
-                        if self.motionnet_type == "PM":
-                            mPDP_q = np.zeros((R,))
-                            mPTP_q = np.zeros((R,))
-                            mPRP_q = np.zeros((R,))
-
-                            dtPDimThres_tp = dtPDimThres_tp_sum[t]
-                            dtPDimThres_fp = dtPDimThres_fp_sum[t]
-                            dtPDimThres_pr = dtPDimThres_tp / (
-                                dtPDimThres_tp + dtPDimThres_fp + np.spacing(1)
-                            )
-
-                            dtPTransThres_tp = dtPTransThres_tp_sum[t]
-                            dtPTransThres_fp = dtPTransThres_fp_sum[t]
-                            dtPTransThres_pr = dtPTransThres_tp / (
-                                dtPTransThres_tp + dtPTransThres_fp + np.spacing(1)
-                            )
-
-                            dtPRotThres_tp = dtPRotThres_tp_sum[t]
-                            dtPRotThres_fp = dtPRotThres_fp_sum[t]
-                            dtPRotThres_pr = dtPRotThres_tp / (
-                                dtPRotThres_tp + dtPRotThres_fp + np.spacing(1)
-                            )
-
-                            PDim_rc = dtPDimThres_tp / npig
-                            PTrans_rc = dtPTransThres_tp / npig
-                            PRot_rc = dtPRotThres_tp / npig
-
-                            dtPDimThres_pr = dtPDimThres_pr.tolist()
-                            dtPTransThres_pr = dtPTransThres_pr.tolist()
-                            dtPRotThres_pr = dtPRotThres_pr.tolist()
-
-                            for i in range(nd - 1, 0, -1):
-                                if dtPDimThres_pr[i] > dtPDimThres_pr[i - 1]:
-                                    dtPDimThres_pr[i - 1] = dtPDimThres_pr[i]
-                                if dtPTransThres_pr[i] > dtPTransThres_pr[i - 1]:
-                                    dtPTransThres_pr[i - 1] = dtPTransThres_pr[i]
-                                if dtPRotThres_pr[i] > dtPRotThres_pr[i - 1]:
-                                    dtPRotThres_pr[i - 1] = dtPRotThres_pr[i]
-
-                            PDim_inds = np.searchsorted(PDim_rc, p.recThrs, side="left")
-                            try:
-                                for ri, pi in enumerate(PDim_inds):
-                                    mPDP_q[ri] = dtPDimThres_pr[pi]
-                            except:
-                                pass
-
-                            PTrans_inds = np.searchsorted(
-                                PTrans_rc, p.recThrs, side="left"
-                            )
-                            try:
-                                for ri, pi in enumerate(PTrans_inds):
-                                    mPTP_q[ri] = dtPTransThres_pr[pi]
-                            except:
-                                pass
-
-                            PRot_inds = np.searchsorted(PRot_rc, p.recThrs, side="left")
-                            try:
-                                for ri, pi in enumerate(PRot_inds):
-                                    mPRP_q[ri] = dtPRotThres_pr[pi]
-                            except:
-                                pass
-
-                            mPDP[t, :, k, a, m] = np.array(mPDP_q)
-                            mPTP[t, :, k, a, m] = np.array(mPTP_q)
-                            mPRP[t, :, k, a, m] = np.array(mPRP_q)
 
                         # MotionNet: mTP, mOP, mDP
                         dtMotionThres_tp = dtMotionThres_tp_sum[t]
@@ -1689,27 +1321,6 @@ class MotionCocoEval:
             "nIns_total_pred_trans": nIns_total_pred_trans,
         }
 
-        if self.TYPE_MATCH:
-            self.eval.update(
-                {
-                    "mis_origin_scores": mis_origin_scores,
-                    "mis_axis_scores": mis_axis_scores,
-                    "mis_axis_rot_scores": mis_axis_rot_scores,
-                    "mis_axis_trans_scores": mis_axis_trans_scores,
-                }
-            )
-
-        if self.motionnet_type == "PM":
-            self.eval.update(
-                {
-                    "pdim_scores": pdim_scores,
-                    "ptrans_scores": ptrans_scores,
-                    "prot_scores": prot_scores,
-                    "mPDP": mPDP,
-                    "mPTP": mPTP,
-                    "mPRP": mPRP,
-                }
-            )
         if self.motionnet_type == "BMOC":
             self.eval.update(
                 {
@@ -2391,37 +2002,6 @@ class MotionCocoEval:
                     _summarize(32, iouThr=0.5, maxDets=self.params.maxDets[2])
                     _summarize(32, iouThr=0.75, maxDets=self.params.maxDets[2])
                     _summarize(32, iouThr=0.95, maxDets=self.params.maxDets[2])
-                if self.motionnet_type == "PM":
-                    # MotionNet: average pose dimension (different ious)
-                    _summarize(12)
-                    _summarize(12, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(12, iouThr=0.75, maxDets=self.params.maxDets[2])
-                    _summarize(12, iouThr=0.95, maxDets=self.params.maxDets[2])
-                    # MotionNet: Average Precision (Motion Pose Dimension Threshold) (different ious)
-                    _summarize(17)
-                    _summarize(17, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(17, iouThr=0.75, maxDets=self.params.maxDets[2])
-                    _summarize(17, iouThr=0.95, maxDets=self.params.maxDets[2])
-                    # MotionNet: average pose translation (different ious)
-                    _summarize(13)
-                    _summarize(13, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(13, iouThr=0.75, maxDets=self.params.maxDets[2])
-                    _summarize(13, iouThr=0.95, maxDets=self.params.maxDets[2])
-                    # MotionNet: Average Precision (Motion Pose Translation Threshold) (different ious)
-                    _summarize(18)
-                    _summarize(18, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(18, iouThr=0.75, maxDets=self.params.maxDets[2])
-                    _summarize(18, iouThr=0.95, maxDets=self.params.maxDets[2])
-                    # MotionNet: average pose rotation (different ious)
-                    _summarize(14)
-                    _summarize(14, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(14, iouThr=0.75, maxDets=self.params.maxDets[2])
-                    _summarize(14, iouThr=0.95, maxDets=self.params.maxDets[2])
-                    # MotionNet: Average Precision (Motion Pose Rotation Threshold) (different ious)
-                    _summarize(19)
-                    _summarize(19, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(19, iouThr=0.75, maxDets=self.params.maxDets[2])
-                    _summarize(19, iouThr=0.95, maxDets=self.params.maxDets[2])
                 if self.motionnet_type == "BMOC":
                     # MotionNet: average origin world distance to the gt axis world
                     _summarize(15)
@@ -2497,13 +2077,6 @@ class MotionCocoEval:
                 _summarize(40, iouThr=0.75, maxDets=self.params.maxDets[2])
                 _summarize(40, iouThr=0.95, maxDets=self.params.maxDets[2])
 
-
-                
-                if self.TYPE_MATCH:
-                    _summarize(27, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(28, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(29, iouThr=0.5, maxDets=self.params.maxDets[2])
-                    _summarize(30, iouThr=0.5, maxDets=self.params.maxDets[2])
             else:
                 for cat in range(3):
                     if self.MACRO_TYPE == False:
@@ -2526,18 +2099,6 @@ class MotionCocoEval:
                     _summarize(10, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
                     _summarize(9, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
                     _summarize(11, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                    if self.motionnet_type == "PM":
-                        _summarize(12, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        # MotionNet: Average Precision (Motion Pose Dimension Threshold) (different ious)
-                        _summarize(17, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        # MotionNet: average pose translation (different ious)
-                        _summarize(13, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        # MotionNet: Average Precision (Motion Pose Translation Threshold) (different ious)
-                        _summarize(18, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        # MotionNet: average pose rotation (different ious)
-                        _summarize(14, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        # MotionNet: Average Precision (Motion Pose Rotation Threshold) (different ious)
-                        _summarize(19, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
                     if self.motionnet_type == "BMOC":
                         _summarize(15, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
                         _summarize(16, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
@@ -2548,11 +2109,6 @@ class MotionCocoEval:
                     _summarize(24, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
                     _summarize(25, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
                     _summarize(26, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                    if self.TYPE_MATCH:
-                        _summarize(27, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        _summarize(28, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        _summarize(29, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
-                        _summarize(30, iouThr=0.5, maxDets=self.params.maxDets[2], cat=cat)
 
             return stats
 

@@ -32,7 +32,6 @@ class MotionOutputs:
         box_reg_loss_type="smooth_l1",
         box_reg_loss_weight=1.0,
         only_DET = False,
-        freeze_DET=False,
     ):
         """
         Args:
@@ -107,7 +106,6 @@ class MotionOutputs:
             )
         self._no_instances = len(proposals) == 0  # no instances found
         self.only_DET = only_DET
-        self.freeze_DET = freeze_DET
 
     def _log_accuracy(self):
         """
@@ -333,14 +331,6 @@ class MotionOutputs:
                 "loss_morigin": torch.tensor(0.0, device=self.gt_classes.device),
                 "loss_maxis": torch.tensor(0.0, device=self.gt_classes.device),
             }
-        elif self.freeze_DET:
-            return {
-                "loss_cls": torch.tensor(0.0, device=self.gt_classes.device),
-                "loss_box_reg": torch.tensor(0.0, device=self.gt_classes.device),
-                "loss_mtype": self.mtype_loss(),
-                "loss_morigin": self.morigin_loss(),
-                "loss_maxis": self.maxis_loss(),
-            }
         else:
             return {
                 "loss_cls": self.softmax_cross_entropy_loss(),
@@ -400,8 +390,6 @@ class MotionOutputLayers(nn.Module):
         use_GTBBX = False,
         use_GTCAT=False,
         only_DET = False,
-        freeze_DET=False,
-        random_baseline=False,
     ):
         """
         NOTE: this interface is experimental.
@@ -551,9 +539,6 @@ class MotionOutputLayers(nn.Module):
         self.use_GTCAT = use_GTCAT
 
         self.only_DET = only_DET
-        self.freeze_DET = freeze_DET
-
-        self.random_baseline = random_baseline
 
     @classmethod
     def from_config(cls, cfg, input_shape):
@@ -571,16 +556,6 @@ class MotionOutputLayers(nn.Module):
             only_DET = cfg.MODEL.ONLY_DET
         else:
             only_DET = False
-
-        if "FREEZE_DET" in cfg.MODEL:
-            freeze_DET = cfg.MODEL.FREEZE_DET
-        else:
-            freeze_DET = False
-
-        if "RANDOM_BASELINE" in cfg.MODEL:
-            random_baseline = cfg.MODEL.RANDOM_BASELINE
-        else:
-            random_baseline = False
 
         return {
             "input_shape": input_shape,
@@ -601,9 +576,6 @@ class MotionOutputLayers(nn.Module):
             "use_GTBBX": use_GTBBX,
             "use_GTCAT": use_GTCAT,
             "only_DET": only_DET,
-            "freeze_DET": freeze_DET,
-
-            "random_baseline": random_baseline,
         }
 
     def forward(self, x):
@@ -618,8 +590,6 @@ class MotionOutputLayers(nn.Module):
             x = torch.flatten(x, start_dim=1)
         scores = self.cls_score(x)
         proposal_deltas = self.bbox_pred(x)
-        if self.freeze_DET:
-            x = x.detach()
         # Predict the value for the motion type, motion origin and motion axis
         mtype = self.mtype_layer(x)
         morigin = self.morigin_layer(x)
@@ -647,7 +617,6 @@ class MotionOutputLayers(nn.Module):
             self.box_reg_loss_type,
             self.box_reg_loss_weight,
             self.only_DET,
-            self.freeze_DET,
         ).losses()
 
     # MotionNet: functions used when testing
@@ -760,24 +729,10 @@ class MotionOutputLayers(nn.Module):
         _, _, mtype, morigin, maxis = predictions
         num_inst_per_image = [len(p) for p in proposals]
 
-        if self.random_baseline:
-            # Randomly assign value to mtype, maxis and morigin
-            # For mtype, if random number < 0.5, then mtype will be 0, or will be 1
-            mtype = torch.rand(mtype.size(0))
-            mtype[mtype<0.5] = 0.0
-            mtype[mtype>0.5] = 1.0
+        pred_probs = F.softmax(mtype, dim=1)
+        mtype = torch.max(pred_probs, 1).indices.float()
 
-            # For maxis, randomly gives values, then normaliz it
-            maxis = torch.rand(maxis.size())
-            maxis = F.normalize(maxis, p=2, dim=1)
-
-            # For morigin, make the random origin from -1 to 1
-            morigin = torch.rand(morigin.size()) * 2 - 1
-        else:
-            pred_probs = F.softmax(mtype, dim=1)
-            mtype = torch.max(pred_probs, 1).indices.float()
-
-            maxis = F.normalize(maxis, p=2, dim=1)
+        maxis = F.normalize(maxis, p=2, dim=1)
 
         return (
             mtype.split(num_inst_per_image, dim=0),
