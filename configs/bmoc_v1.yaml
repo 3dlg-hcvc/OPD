@@ -1,7 +1,0 @@
-_BASE_: "motionnet.yaml"
-MODEL:
-  MOTIONNET:
-    TYPE: BMOC_V1
-INPUT:
-  ROTATION_BIN_NUM: 10
-  COVER_VALUE: 0.2 
