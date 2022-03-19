@@ -112,20 +112,35 @@ python evaluate_on_log.py \
 * Use inference result file instead of pretrained model: --inference-file `<PATH_TO_INFERENCE_FILE>`, this will directly evaluate using the results without inferencing again
 
 ## Visualization
-* Visualize the GT with 1000 random images in val set (Current code version need to download again the [dataset]() in raw format for visualization)
-```sh
-python render_gt.py \
---output-dir vis_output \
---data-path <PATH_TO_DATASET>
---valid-image <IMAGE_LIST_FILE> \
-```
+(Current code version need to download the [dataset]() in raw format for visualization)
+* Visualize the GT with 1000 random images in val set 
+  ```sh
+  python render_gt.py \
+  --output-dir vis_output \
+  --data-path <PATH_TO_DATASET> \
+  --valid-image <IMAGE_LIST_FILE> \
+  ```
   * Dataset:
     * OPDSynth: 
       * --data-path `dataset/vis/MotionDataset_6.11`
-      * --valid-image `dataset/vis/MotionDataset_6.11/valid_1000.json`
+      * --valid-image `dataset/vis/MotionDataset_6.11/val_1000.json`
     * OPDReal:
       * --data-path `dataset/vis/MotionDataset_real`
-      * --model_attr_path `dataset/vis/MotionDataset_real/real-attr.json`
-      * additional --opts (Add thie after 5000): ` MODEL.PIXEL_MEAN '[144.7425400388733, 131.67830996768458, 113.38040344244014, 975.0775146484375]' MODEL.PIXEL_STD '[20.100716763269578, 20.805474870130748, 23.863171739073888, 291.606201171875]'`
-      * MODEL.WEIGHTS <PRETRAIN_OPDSynth_MODEL>
-      * PS: the LR for depth data is 0.0001 instead of 0.001 (the same to the paper describes)
+      * --model_attr_path `dataset/vis/MotionDataset_real/real-val_1000.json`
+      * --is-real
+
+* Visualize the PREDICTION with 1000 random images in val set
+  ```sh
+  python render_pred.py \
+  --output-dir vis_output \
+  --data-path <PATH_TO_DATASET> \
+  --model_attr_path <PATH_TO_ATTR> \
+  --valid-image <IMAGE_LIST_FILE> \
+  --inference-file <PATH_TO_INFERENCE_FILE> \
+  --score-threshold 0.8 \
+  --update-all 
+  ```
+  * Dataset:
+    * OPDSynth: the same to above
+    * OPDReal: the same to above
+  * PS: inference file can be got after doing the evaluation 
