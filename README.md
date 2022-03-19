@@ -41,9 +41,11 @@ You can download our [OPDSynth]() (MotionDataset_h5_6.11) and [OPDReal]() (Motio
 ## Pretrained-Models
 You can download our pretrained [models]() to **./models** folder (there is one models.tar.gz under /models/OPD).
 
-[OPDRCNN-O RGB]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-O Depth]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-O RGBD]()
+Models for OPDSynth start with `Synth`, for OPDReal start with `Real`
 
-[OPDRCNN-C RGB]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-C Depth]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-C RGBD]()
+`[OPDRCNN-O RGB]`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`[OPDRCNN-O Depth]`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`[OPDRCNN-O RGBD]`
+
+`[OPDRCNN-C RGB]`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`[OPDRCNN-C Depth]`&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`[OPDRCNN-C RGBD]`
 
 ## Training
 To train from the scratch, you can use below commands. The output will include evaluation results on the val set.
