@@ -36,7 +36,7 @@ pip install -r requirements.txt
 ```
 
 ## Dataset
-You can download our [OPDSynth]() and [OPDReal]() datasets to **./dataset** folder.
+You can download our [OPDSynth]() and [OPDReal]() datasets to **./dataset** folder (there is one tar.gz under /dataset/OPD).
 
 ## Pretrained-Models
 You can download our pretrained [models]() to **./models** folder
