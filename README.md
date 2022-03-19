@@ -36,230 +36,96 @@ pip install -r requirements.txt
 ```
 
 ## Dataset
-You can simply download our [OPDSynth]() and [OPDReal]() datasets to **./dataset**
+You can download our [OPDSynth]() and [OPDReal]() datasets to **./dataset** folder.
 
 ## Pretrained-Models
+You can download our pretrained [models]() to **./models** folder
+
+[OPDRCNN-O RGB]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-O Depth]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-O RGBD]()
+
+[OPDRCNN-C RGB]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-C Depth]()&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[OPDRCNN-C RGBD]()
 
 ## Training
+To train from the scratch, you can use below commands. The output will include evaluation results on the val set.
 
+* Train the only_det model (only train the detection and segmentation) -> only det model has no difference for OPDRCNN-O or -C.
+  ```sh
+  python train.py \
+  --config-file configs/bmcc.yaml \
+  --output-dir train_output \
+  --data-path <PATH_TO_DATASET> \
+  --input-format <RGB/depth/RGBD> \
+  --model_attr_path <PATH_TO_ATTR> \
+  --only_det 
+  --opts SOLVER.BASE_LR 0.005 SOLVER.MAX_ITER 30000 SOLVER.STEPS '(18000.0, 24000.0)' SOLVER.CHECKPOINT_PERIOD 5000 
+  ```
+  * Dataset:
+    * OPDSynth:
+      
+      * --data-path `dataset/MotionDataset_h5_6.11`
+      * --model_attr_path `dataset/MotionDataset_h5_6.11/urdf-attr.json`
+* Pick the best only detections model for different inputs `RGB/depth/RGBD`
+* Continue training the full models with the best only detection models
+  ```sh
+  python train.py \
+  --config-file <MODEL_CONFIG> \
+  --output-dir train_output \
+  --data-path <PATH_TO_DATASET> \
+  --input-format <RGB/depth/RGBD> \
+  --model_attr_path <PATH_TO_ATTR> \
+  --extrinsic_weight 15 \
+  --motion_weights 1 8 8 \
+  --opts MODEL.WEIGHTS <PPRETRAINED_MODEL> SOLVER.BASE_LR 0.001 SOLVER.MAX_ITER 60000 SOLVER.STEPS '(36000, 48000)' SOLVER.CHECKPOINT_PERIOD 5000
+  ```
+  * Model:
+    * OPDRCNN-O: 
+      * --config-file `configs/bmoc_v0.yaml`
+    * OPDRCNN-C:
+      * --config-file `configs/bmcc.yaml`
+  
+  * Dataset:
+    * OPDSynth: 
+      * The same to above
+      * MODEL.WEIGHTS <BEST_ONLY_DET_MODEL>
+    * OPDReal:
+      * --data-path `dataset/MotionDataset_h5_real`
+      * --model_attr_path `dataset/MotionDataset_h5_real/real-attr.json`
+      * additional --opts (Add thie after 5000): ` MODEL.PIXEL_MEAN '[144.7425400388733, 131.67830996768458, 113.38040344244014, 975.0775146484375]' MODEL.PIXEL_STD '[20.100716763269578, 20.805474870130748, 23.863171739073888, 291.606201171875]'`
+      * MODEL.WEIGHTS <PRETRAIN_OPDSynth_MODEL>
+      * PS: the LR for depth data is 0.0001 instead of 0.001 (the same to the paper describes)
 ## Evaluation
+Evaluate with pretrained model, or your own trained model on val set
+
+```sh
+python evaluate_on_log.py \
+--config-file <MODEL_CONFIG> \
+--output-dir eval_output \
+--data-path <PATH_TO_DATASET> \
+--input-format <RGB/depth/RGBD> \
+--model_attr_path <PATH_TO_ATTR> \
+--opts MODEL.WEIGHTS <PPRETRAINED_MODEL>
+```
+
+* Dataset needs the same options as above
+* Model needs the same options as above
+* Evaluate on test set: add things to `--opts DATASETS.TEST "('MotionNet_test',)"` (The complete version will be `--opts MODEL.WEIGHTS <PPRETRAINED_MODEL> DATASETS.TEST "('MotionNet_test',)"`)
+* Use inference result file instead of pretrained model: --inference-file `<PATH_TO_INFERENCE_FILE>`, this will directly evaluate using the results without inferencing again
 
 ## Visualization
-
-# Configuration
-
-Configuration files are in `configs/`
-
-(Other parameters can refer to `configs/motionnet.yaml`)
-
-MotionNet configuration
-* MODEL.MOTIONNET
-  * TYPE: BMOC | BMCC
-* INPUT.FORMAT: RGB | RGBD | depth
-
-# Data
-
-## Sapien Data Preprocess
-`scripts/data/sapien_data_process`
-* Raw Process `scripts/data/sapien_data_process/raw_process`
-  * Get all parts from the sapien dataset 
-    ```
-    python sapien_process.py
-    ```
-  * Pick the part which we care
-    ```
-    python sapien_statistics.py
-    ```
-  * Validate the part name (One example for each part name)
-    ```
-    python gif_validation.py
-    ```
-* Valid Process
-`scripts/data/sapien_data_process/valid_process`
-
-  * Validate each part manually
-    ```
-    python valid_part_process.py
-    ```
-  * (Optional) Get statistic results of the validated parts
-    ```
-    python valid_part_statistics.py
-    ```
-
-## Render Images
-(The rendering process makes use of the scene toolkit project https://github.com/3dlg-hcvc/scene-toolkit/tree/articulations-refactor-motionnet)
-
-* Copy `scripts/data/sapien_data_process/valid_process/validModelPart.json` into `$STK/ssc/articulations/`
-
-* Render the raw data we need based on the picked models and parts
-    ```
-    python render-2DMotion.py # Code is in $STK/ssc/articulations/
-    ``` 
-
-## Raw Data Process (For 2DMotion data only)
-`scripts/data/raw_data_process/`
-
-* Preprocess 
-`scripts/data/raw_data_process/preprocess`
-  * Process the raw annotations into the format we want
-    ```
-    python raw_preprocess_camera.py
-    ``` 
-  * Add random background from matterport3d into the RGB images in our dataset
-    ```
-    python TEST_add_background.py
-    ```
-  * Get the model id in the valid and test set (we use 7:1.5:1.5) 
-    ```
-    # todo: make these code together
-    python test_id.py
-    python re_test_id.py
-    ```
-  * Split the raw dataset to get the process dataset
-    ```
-    python split.py
-    ```
-  * (Optional) Calculate the dimension mean for each part 3D bounding box
-    ```
-    python HELP_avg.py
-    ```
-* Covert into COCO format
-`scripts/data/raw_data_process/coco`
-  * Convert the annotation files into COCO annotation format
-    ```
-    python convert_coco.py
-    ```
-  * Divide the files into the dataset format detectron2 needs
-    ```
-    python final_dataset.py
-    ``` 
-  * Convert the images into h5 format
-    ```
-    python convert_h5.py
-    ```
-
-## REAL Data Preprocess (For MotionREAL data only)
-`scripts/data/real_scan_process/`
-
-* Preprocess 
-  * Get the name mapping to rename the scans into consistent format and get the diagonal of each scan
-    ```
-    python motion_real_diagonal.py
-    ``` 
-  * Check the valid scans, change the annotation into 2DMotion format, get the dataset split
-    ```
-    python motion_real_statistics.py
-    ```
-  * Split the raw dataset to get the process dataset
-    ```
-    python split.py
-    ```
-* Covert into COCO format
-`scripts/data/raw_data_process/coco`
-  * Convert the annotation files into COCO annotation format
-    ```
-    python convert_coco.py
-    ```
-  * Divide the files into the dataset format detectron2 needs
-    ```
-    python final_dataset.py
-    ``` 
-  * Convert the images into h5 format
-    ```
-    python convert_h5.py
-    ```
-
-## OneDoor Data Preprocess (For ANCSH OneDoor data only)
-`scripts/data/ancsh_data/`
-
-* Preprocess 
-  * Move the objects that are in the OneDoor dataset to a new folder
-    ```
-    python generate_raw_ancsh.py
-    ```
-  * Split the raw dataset to get the process dataset
-    ```
-    python split.py
-    ```
-* Covert into COCO format
-`scripts/data/raw_data_process/coco`
-  * Convert the annotation files into COCO annotation format
-    ```
-    python convert_coco.py
-    ```
-  * Divide the files into the dataset format detectron2 needs
-    ```
-    python final_dataset.py
-    ``` 
-  * Convert the images into h5 format
-    ```
-    python convert_h5.py
-    ```
-
-## 2DMotion baseline network
-All library files are in `motilib/`
-
-* Model Training 
-
-  Refer to `run.sh`
-  * Compute Canada: the train scripts are in `train_scripts/` 
-
-    Set up the enviroment using `train_scripts/setup.sh`
-
-    Update the PATH in `train_scripts/configure.sh`
-
-    * The scripts for only_det: shell scripts starting with `only_det_*.sh` (The folder with the same name include the detailed scripts)
-
-      ```
-      python generate_only_det.py
-      ```
-
-  * Lab Computer: Check the commands on above scripts
-
-  * Paras Details:
-
-	To train the default network, specify the data path (`/path/to/Dataset/MotionDataset_6.11'):
-	`python train.py --data-path <datapath>` 
-
-	To train the network with specific configuration, input format, output directory, and data path:
-	`python train.py --config-file configs/bmcc.yaml --input-format RGB --output-dir train_output/<dirname> --data-path <datapath>` 
-
-	To train different models, specify `configs/pm.yaml` or `configs/bmoc.yaml`.
-
-	Additional configuration parameters can be specified on the command line with `--opts` followed by key-value pairs.
-
-	Examples
-	`--opts MODEL.WEIGHTS <path-to-weights> SOLVER.MAX_ITER 40000` 
-
-	Some training configurations
-	* TEST.EVAL_PERIOD: How often to evaluate during training.  Set to 0 to disable evaluation during training.
-	* MODEL.WEIGHTS: model weights to start with 
-	* SOLVER.MAX_ITER: Number of iterations to train for
-	* SOLVER.BASE_LR: Base learning rate
-
-* Model Inference and Evaluation
-  
-  Refer to `run.sh`
-  ```
-  python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts most_frequent_pred origin_NOC
-	python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts most_frequent_pred random_NOC
-	python eval.py -ss finetuning -n 2dmotion
-	python eval.py -ss finetuning -n 2dmotion --opts gtbbx gtcat 
-	python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts gtbbx gtcat gtextrinsic
-	python eval.py -ss finetuning -ms oc_rgb oc_depth oc_rgbd -n 2dmotion --opts gtextrinsic 
-  ```
-
-* Visualization 
-
-  Render the visualization and generate html for them
-	```
-	python render_all.py
-	python vis_scripts/vis_html_gen.py
-	```
-
-* Run All (todo: update)
-
-	Train -> Inference -> Evaluate -> Visualize
-	```
-	./run.sh
-	```
+* Visualize the GT with 1000 random images in val set (Current code version need to download again the [dataset]() in raw format for visualization)
+```sh
+python render_gt.py \
+--output-dir vis_output \
+--data-path <PATH_TO_DATASET>
+--valid-image <IMAGE_LIST_FILE> \
+```
+  * Dataset:
+    * OPDSynth: 
+      * --data-path `dataset/vis/MotionDataset_6.11`
+      * --valid-image `dataset/vis/MotionDataset_6.11/valid_1000.json`
+    * OPDReal:
+      * --data-path `dataset/vis/MotionDataset_real`
+      * --model_attr_path `dataset/vis/MotionDataset_real/real-attr.json`
+      * additional --opts (Add thie after 5000): ` MODEL.PIXEL_MEAN '[144.7425400388733, 131.67830996768458, 113.38040344244014, 975.0775146484375]' MODEL.PIXEL_STD '[20.100716763269578, 20.805474870130748, 23.863171739073888, 291.606201171875]'`
+      * MODEL.WEIGHTS <PRETRAIN_OPDSynth_MODEL>
+      * PS: the LR for depth data is 0.0001 instead of 0.001 (the same to the paper describes)
