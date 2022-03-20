@@ -72,12 +72,21 @@
 		<hr>
         <div class="row align-items-center">
             <div class="col justify-content-center text-center">
-					<img src="img/input_output.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
+					<img src="img/data_example.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
             </div>
         </div>
         <hr>
         <p>
-        Describe
+            Example articulated objects from the OPDSynth dataset and the OPDReal dataset. The first row is from OPDSynth. Left: different openable part categories (lid, in orange, drawer in green, door in red). Right: Cabinet objects with different kinematic structures and varying numbers of openable parts. The second row is from our OPDReal dataset. Left: reconstructed cabinet and its semantic part segmentation. Right: example reconstructed objects from different categories.
+        </p>
+        <div class="row align-items-center">
+            <div class="col justify-content-center text-center">
+					<img src="img/network.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
+            </div>
+        </div>
+        <hr>
+        <p>
+            Illustration of the network structure for our OPDRCNN-C and OPDRCNN-O architectures. We leverage a MaskRCNN backbone to detect openable parts. Additional heads are trained to predict motion parameters for each part.
         </p>
     </div>
 
@@ -86,10 +95,10 @@
         <hr>
         <div>
             <div class="list-group">
-                <a href="https://drive.google.com/file/d/1U8Glb3QsJoJ-tVOnV3g7x23kKsDZ9eEx/view?usp=sharing"
+                <a href="" 
                    class="list-group-item">
                     <img src="img/paper_thumbnails.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
-                </a>
+                </a><!-- TODO: -->
             </div>
         </div>
     </div>
@@ -121,7 +130,9 @@
             This research was enabled in part by support provided by <a href="www.westgrid.ca">WestGrid</a> and <a href="www.computecanada.ca">Compute Canada</a>.
             This work was funded in part by a Canada CIFAR AI Chair, a Canada Research Chair and NSERC Discovery Grant, and enabled in part by support provided by <a href="www.westgrid.ca">WestGrid</a>
             and <a href="www.computecanada.ca">Compute Canada</a>. 
-            We thank Sanjay Haresh for help on collecting scans and offering audio for our video. We thank Yue Ruan for help on collecting scans and annotating. We thank Supriya Pandhre, Xiaohao Sun, Qirui Wu for help on annotating semantic segmentation on our dataset.
+            We thank <a href="https://scholar.google.com/citations?user=boFO-7gAAAAJ&hl=en">Sanjay Haresh</a> for help on collecting scans and offering audio for our video. 
+            We thank <a href="https://www.linkedin.com/in/yue-ruan-127a9a15b/">Yue Ruan</a> for help on collecting scans and annotating. 
+            We thank <a href="https://supriya-gdptl.github.io/">Supriya Pandhre</a>, <a href="https://www.linkedin.com/in/xiaohao-sun-237537195/">Xiaohao Sun</a>, Qirui Wu for help on annotating semantic segmentation on our dataset.
         </div>
     </div>
 
