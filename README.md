@@ -4,7 +4,7 @@
 This repository contains the implementation of **OPDRCNN**, a neural architecture that detects openable parts and predicts their motion parameters from a single-view image.
 <p align="center"><img src="fig/input_output.png" width="100%"></p>
 
-[Paper]()&nbsp; [Project]()
+[Paper]()&nbsp; [Project](https://3dlg-hcvc.github.io/OPD/)
 
 ## Content
 - [Additional Repo](Additional-Repo)
