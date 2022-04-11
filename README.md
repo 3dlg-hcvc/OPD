@@ -7,7 +7,7 @@ This repository contains the implementation of **OPDRCNN**, a neural architectur
 [Paper](https://arxiv.org/pdf/2203.16421.pdf)&nbsp; [Website](https://3dlg-hcvc.github.io/OPD/)
 
 ## Content
-- [Additional Repo](Additional-Repo)
+- [Additional Repo](#Additional-Repo)
 - [Setup](#Setup)
 - [Dataset](#Dataset)
 - [Pretrained Models](#Pretrained-Models)
