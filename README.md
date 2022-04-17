@@ -58,7 +58,7 @@ To train from the scratch, you can use below commands. The output will include e
   --data-path <PATH_TO_DATASET> \
   --input-format <RGB/depth/RGBD> \
   --model_attr_path <PATH_TO_ATTR> \
-  --only_det 
+  --only_det \
   --opts SOLVER.BASE_LR 0.005 SOLVER.MAX_ITER 30000 SOLVER.STEPS '(18000.0, 24000.0)' SOLVER.CHECKPOINT_PERIOD 5000 
   ```
   * Dataset:
@@ -128,7 +128,7 @@ python evaluate_on_log.py \
       * --valid-image `dataset/vis/MotionDataset_6.11/val_1000.json`
     * OPDReal:
       * --data-path `dataset/vis/MotionDataset_real`
-      * --model_attr_path `dataset/vis/MotionDataset_real/real-val_1000.json`
+      * --valid-image `dataset/vis/MotionDataset_real/real_val_1000.json`
       * --is-real
 
 * Visualize the PREDICTION with 1000 random images in val set
