@@ -1,5 +1,5 @@
 # OPD: Single-view 3D Openable Part Detection
-[Hanxiao Jiang](https://jianghanxiao.github.io/), Yongsen Mao, [Manolis Savva](https://msavva.github.io/), [Angel Xuan Chang](http://angelxuanchang.github.io/)
+[Hanxiao Jiang](https://jianghanxiao.github.io/), [Yongsen Mao](https://github.com/SamMaoYS), [Manolis Savva](https://msavva.github.io/), [Angel Xuan Chang](http://angelxuanchang.github.io/)
 
 ## Overview 
 This repository contains the implementation of **OPDRCNN**, a neural architecture that detects openable parts and predicts their motion parameters from a single-view image. The code is developed based on [Detectron2](https://github.com/facebookresearch/detectron2).
