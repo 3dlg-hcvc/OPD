@@ -1,5 +1,4 @@
-# OPD: Single-view 3D Openable Part Detection
-## ECCV 2022
+# OPD: Single-view 3D Openable Part Detection (ECCV 2022)
 [Hanxiao Jiang](https://jianghanxiao.github.io/), [Yongsen Mao](https://github.com/SamMaoYS), [Manolis Savva](https://msavva.github.io/), [Angel Xuan Chang](http://angelxuanchang.github.io/)
 
 ## Overview 
