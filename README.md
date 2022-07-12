@@ -115,7 +115,7 @@ python evaluate_on_log.py \
 * Use inference result file instead of pretrained model: --inference-file `<PATH_TO_INFERENCE_FILE>`, this will directly evaluate using the results without inferencing again
 
 ## Visualization
-(Current code version need to download the [dataset]() in raw format for visualization)
+(Current code version need to download the [dataset](https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/OPD/dataset.tar.gz) in raw format for visualization)
 * Visualize the GT with 1000 random images in val set 
   ```sh
   python render_gt.py \
