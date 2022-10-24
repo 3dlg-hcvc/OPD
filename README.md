@@ -60,7 +60,7 @@ To train from the scratch, you can use below commands. The output will include e
   --input-format <RGB/depth/RGBD> \
   --model_attr_path <PATH_TO_ATTR> \
   --only_det \
-  --opts SOLVER.BASE_LR 0.005 SOLVER.MAX_ITER 30000 SOLVER.STEPS '(18000.0, 24000.0)' SOLVER.CHECKPOINT_PERIOD 5000 
+  --opts SOLVER.BASE_LR 0.0005 SOLVER.MAX_ITER 30000 SOLVER.STEPS '(18000.0, 24000.0)' SOLVER.CHECKPOINT_PERIOD 5000 
   ```
   * Dataset:
     * OPDSynth:
