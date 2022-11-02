@@ -60,12 +60,12 @@ To train from the scratch, you can use below commands. The output will include e
   --input-format <RGB/depth/RGBD> \
   --model_attr_path <PATH_TO_ATTR> \
   --only_det \
-  --opts SOLVER.BASE_LR 0.0005 SOLVER.MAX_ITER 30000 SOLVER.STEPS '(18000.0, 24000.0)' SOLVER.CHECKPOINT_PERIOD 5000 
+  --opts SOLVER.BASE_LR 0.005 SOLVER.MAX_ITER 30000 SOLVER.STEPS '(18000.0, 24000.0)' SOLVER.CHECKPOINT_PERIOD 5000 
   ```
   * Dataset:
     * OPDSynth:
       
-      * --data-path `dataset/MotionDataset_h5_6.11` (In --opts SOLVER.BASE_LR 0.005 -> this is the lr for OPDSynth)
+      * --data-path `dataset/MotionDataset_h5_6.11` 
       * --model_attr_path `dataset/MotionDataset_h5_6.11/urdf-attr.json`
 * Pick the best only detections model for different inputs `RGB/depth/RGBD`
 * Continue training the full models with the best only detection models
