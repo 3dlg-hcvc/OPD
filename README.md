@@ -113,6 +113,7 @@ python evaluate_on_log.py \
 * Model needs the same options as above
 * Evaluate on test set: add things to `--opts DATASETS.TEST "('MotionNet_test',)"` (The complete version will be `--opts MODEL.WEIGHTS <PPRETRAINED_MODEL> DATASETS.TEST "('MotionNet_test',)"`)
 * Use inference result file instead of pretrained model: --inference-file `<PATH_TO_INFERENCE_FILE>`, this will directly evaluate using the results without inferencing again
+* Evaluating on OPDReal needs the setting of PIXEL_MEAN and STD following above
 
 ## Visualization
 (Current code version need to download the [dataset](https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/OPD/dataset.tar.gz) in raw format for visualization)
