@@ -153,10 +153,10 @@ python evaluate_on_log.py \
 
 If you find this code useful, please consider citing:
 ```bibtex
-@article{jiang2022opd,
-          title={OPD: Single-view 3D Openable Part Detection}, 
-          author={Jiang, Hanxiao and Mao, Yongsen and Savva, Manolis and Chang, Angel X},
-          journal={arXiv preprint arXiv:2203.16421},
-          year={2022}
-      }
+@inproceedings{jiang2022opd,
+  title={{OPD}: Single-view {3D} Openable Part Detection},
+  author={Jiang, Hanxiao and Mao, Yongsen and Savva, Manolis and Chang, Angel X},
+  booktitle=ECCV,
+  year={2022}
+}
 ```
