@@ -148,3 +148,15 @@ python evaluate_on_log.py \
     * OPDSynth: the same to above
     * OPDReal: the same to above
   * PS: inference file can be got after doing the evaluation 
+
+## Citation
+
+If you find this code useful, please consider citing:
+```bibtex
+@article{jiang2022opd,
+          title={OPD: Single-view 3D Openable Part Detection}, 
+          author={Jiang, Hanxiao and Mao, Yongsen and Savva, Manolis and Chang, Angel X},
+          journal={arXiv preprint arXiv:2203.16421},
+          year={2022}
+      }
+```
