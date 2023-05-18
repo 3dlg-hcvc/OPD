@@ -154,9 +154,11 @@ python evaluate_on_log.py \
 If you find this code useful, please consider citing:
 ```bibtex
 @inproceedings{jiang2022opd,
-  title={{OPD}: Single-view {3D} Openable Part Detection},
+  title={OPD: Single-view 3D openable part detection},
   author={Jiang, Hanxiao and Mao, Yongsen and Savva, Manolis and Chang, Angel X},
-  booktitle=ECCV,
-  year={2022}
+  booktitle={Computer Vision--ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23--27, 2022, Proceedings, Part XXXIX},
+  pages={410--426},
+  year={2022},
+  organization={Springer}
 }
 ```
