@@ -40,7 +40,7 @@ pip install -r requirements.txt
 You can download our `[OPDSynth]` (MotionDataset_h5_6.11) and `[OPDReal]` (MotionDataset_h5_real) [datasets](https://huggingface.co/datasets/Jianghanxiao/OPD/resolve/main/dataset.tar.gz) to **./dataset** folder (there is one dataset.tar.gz under /dataset/OPD).
 
 ## Pretrained-Models
-You can download our pretrained [models](https://aspis.cmpt.sfu.ca/projects/motionnet/opd/models/OPD/models.tar.gz) to **./models** folder (there is one models.tar.gz under /models/OPD).
+You can download our pretrained [models](https://huggingface.co/datasets/Jianghanxiao/OPD/resolve/main/models.tar.gz) to **./models** folder (there is one models.tar.gz under /models/OPD).
 
 Models for OPDSynth start with `Synth`, for OPDReal start with `Real`
 
