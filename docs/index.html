@@ -1,174 +1,390 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description"
-          content="OPD: Single-view 3D Openable Part Detection">
-    <meta name="author" content="Hanxiao Jiang,
-                                 Yongsen Mao,
-                                 Manolis Savva,
-                                 Angel X. Chang">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="OPD detects openable object parts and predicts their 3D motion parameters from a single image.">
+  <meta name="keywords" content="openable part detection, articulated objects, 3D vision, motion prediction, ECCV 2022">
+  <meta name="theme-color" content="#f4f0e8">
 
-    <title>OPD: Single-view 3D Openable Part Detection</title>
-    <!-- Bootstrap core CSS -->
-    <!--link href="bootstrap.min.css" rel="stylesheet"-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <meta property="og:title" content="OPD — Single-view 3D Openable Part Detection">
+  <meta property="og:description" content="Detect what can open—and predict how it moves—from a single image.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="img/input_output.png">
 
-    <!-- Custom styles for this template -->
-    <link href="offcanvas.css" rel="stylesheet">
-    <!--    <link rel="icon" href="img/favicon.gif" type="image/gif">-->
-
-    <!-- Loads <model-viewer> for modern browsers: -->
-    <script type="module"
-            src="https://unpkg.com/@google/model-viewer/dist/model-viewer.js">
-    </script>
+  <title>OPD — Single-view 3D Openable Part Detection</title>
+  <link rel="icon" type="image/svg+xml" href="img/favicon.svg">
+  <link rel="stylesheet" href="offcanvas.css">
 </head>
 
-<body>
-<div class="jumbotron jumbotron-fluid">
-    <div class="container"></div>
-    <h2>OPD: Single-view 3D Openable Part Detection [ECCV 2022, Oral]</h2>
-    <!-- <h2>CVPR 2022</h2> -->
-    <hr>
-    <p class="authors">
-        <a href="https://jianghanxiao.github.io/"> Hanxiao Jiang</a>, 
-        <a href="https://github.com/SamMaoYS"> Yongsen Mao</a>,
-        <a href="https://msavva.github.io/"> Manolis Savva</a>,
-        <a href="https://angelxuanchang.github.io/"> Angel X. Chang</a>
-    </p>
-    <div class="btn-group" role="group" aria-label="Top menu">
-        <a class="btn btn-primary" href="https://github.com/3dlg-hcvc/OPD">Code</a> <!-- TODO: -->
-        <a class="btn btn-primary" href="https://arxiv.org/abs/2203.16421">Paper</a> <!-- TODO: -->
-    </div>
-</div>
+<body class="project-page">
+  <a class="skip-link" href="#main">Skip to main content</a>
 
-<div class="container">
-    <div class="section">
-        <div class="row align-items-center">
-            <div class="col justify-content-center text-center">
-                <img src="img/input_output.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
-                </video>
+  <header class="project-nav">
+    <div class="project-nav__inner">
+      <a class="project-nav__brand" href="https://jianghanxiao.github.io/" aria-label="Hanxiao Jiang homepage">
+        <span class="project-nav__mark" aria-hidden="true">HJ</span>
+        <span class="project-nav__owner">Hanxiao Jiang</span>
+      </a>
+
+      <a class="project-nav__title" href="#top">OPD</a>
+
+      <nav class="project-nav__links" aria-label="Project sections">
+        <a href="#overview">Overview</a>
+        <a href="#approach">Approach</a>
+        <a href="#resources">Resources</a>
+        <a href="#paper">Paper</a>
+      </nav>
+
+      <a class="project-nav__repo" href="https://github.com/3dlg-hcvc/OPD" target="_blank" rel="noopener noreferrer">
+        <span class="repo-mark" aria-hidden="true">⌘</span>
+        <span>GitHub</span>
+        <b aria-hidden="true">↗</b>
+      </a>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="hero-stack" id="top">
+      <section class="project-hero" aria-labelledby="project-title">
+        <div class="project-hero__grid">
+          <div class="project-hero__copy">
+            <div class="project-hero__eyebrow">ECCV 2022 <span></span> Oral Presentation</div>
+
+            <h1 id="project-title" class="publication-title">
+              <span class="publication-title__name">OPD:</span>
+              Single-view 3D Openable Part Detection
+            </h1>
+
+            <p class="project-hero__lede">
+              What can open—and how will it move—from just one image?
+            </p>
+
+            <div class="publication-authors" aria-label="Authors">
+              <a href="https://jianghanxiao.github.io/" target="_blank" rel="noopener noreferrer">Hanxiao Jiang</a>
+              <span aria-hidden="true">·</span>
+              <a href="https://github.com/SamMaoYS" target="_blank" rel="noopener noreferrer">Yongsen Mao</a>
+              <span aria-hidden="true">·</span>
+              <a href="https://msavva.github.io/" target="_blank" rel="noopener noreferrer">Manolis Savva</a>
+              <span aria-hidden="true">·</span>
+              <a href="https://angelxuanchang.github.io/" target="_blank" rel="noopener noreferrer">Angel X. Chang</a>
             </div>
-        </div>
-        <hr>
-        <p>
-            We address the task of predicting what parts of an object can open and how they move when they do so. The input is a single image of an object, and as output we detect what parts of the object can open, and the motion parameters describ- ing the articulation of each openable part. To tackle this task, we create two datasets of 3D objects: OPDSynth based on existing synthetic objects, and OPDReal based on RGBD reconstructions of real objects. We then design OPDRCNN, a neural architecture that detects openable parts and predicts their motion parameters. Our experiments show that this is a challenging task especially when considering general- ization across object categories, and the limited amount of information in a single image. Our architecture outperforms baselines and prior work especially for RGB image inputs.
-        </p>
-    </div>
 
-    <div class="section">
-        <h2>Video</h2>
-		<hr>
-		<div class="vcontainer">
-			<iframe class="video" src="https://www.youtube.com/embed/P85iCaD0rfc" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-		</div><!-- TODO: -->
-    </div>
-
-    <div class="section">
-	    <h2>Overview</h2>
-		<hr>
-        <div class="row align-items-center">
-            <div class="col justify-content-center text-center">
-					<img src="img/data_example.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
+            <div class="publication-links" aria-label="Project resources">
+              <a class="resource-button" href="https://arxiv.org/pdf/2203.16421.pdf" target="_blank" rel="noopener noreferrer">
+                <span>Paper</span><b aria-hidden="true">↗</b>
+              </a>
+              <a class="resource-button" href="https://arxiv.org/abs/2203.16421" target="_blank" rel="noopener noreferrer">
+                <span>arXiv</span><b aria-hidden="true">↗</b>
+              </a>
+              <a class="resource-button resource-button--primary" href="https://github.com/3dlg-hcvc/OPD" target="_blank" rel="noopener noreferrer">
+                <span>Code</span><b aria-hidden="true">↗</b>
+              </a>
+              <a class="resource-button" href="#video">
+                <span>Video</span><b aria-hidden="true">↓</b>
+              </a>
             </div>
-        </div>
-        <hr>
-        <p>
-            Example articulated objects from the OPDSynth dataset and the OPDReal dataset. The first row is from OPDSynth. Left: different openable part categories (lid, in orange, drawer in green, door in red). Right: Cabinet objects with different kinematic structures and varying numbers of openable parts. The second row is from our OPDReal dataset. Left: reconstructed cabinet and its semantic part segmentation. Right: example reconstructed objects from different categories.
-        </p>
-        <div class="row align-items-center">
-            <div class="col justify-content-center text-center">
-					<img src="img/network.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
+          </div>
+
+          <aside class="prediction-specimen" aria-label="OPD prediction contract">
+            <div class="prediction-specimen__header">
+              <span>Prediction contract / 01</span>
+              <i aria-hidden="true"></i>
             </div>
+
+            <div class="prediction-flow" aria-hidden="true">
+              <div class="prediction-flow__input">
+                <span>RGB(D)</span>
+                <small>single view</small>
+              </div>
+              <span class="prediction-flow__arrow">→</span>
+              <div class="prediction-flow__part">
+                <span class="part-box"></span>
+                <span class="part-mask"></span>
+                <small>openable part</small>
+              </div>
+              <span class="prediction-flow__arrow">→</span>
+              <div class="prediction-flow__motion">
+                <span class="motion-axis"></span>
+                <span class="motion-origin"></span>
+                <small>3D motion</small>
+              </div>
+            </div>
+
+            <dl class="prediction-specimen__rows">
+              <div><dt>Detect</dt><dd>box · mask · category</dd></div>
+              <div><dt>Estimate</dt><dd>type · axis · origin</dd></div>
+              <div><dt>Generalize</dt><dd>across object categories</dd></div>
+            </dl>
+
+            <div class="prediction-specimen__legend" aria-hidden="true">
+              <span>Parts</span><span>Kinematics</span><span>Single view</span>
+            </div>
+          </aside>
         </div>
-        <hr>
+
+      </section>
+
+      <aside class="project-note">
         <p>
-            Illustration of the network structure for our OPDRCNN-C and OPDRCNN-O architectures. We leverage a MaskRCNN backbone to detect openable parts. Additional heads are trained to predict motion parameters for each part.
+          OPD turns a single observation into an actionable description of an articulated object: which parts open, and the motion that makes each part move.
         </p>
+        <a href="#overview">Explore the project <span aria-hidden="true">↓</span></a>
+      </aside>
     </div>
 
-    <div class="section">
-        <h2>Paper</h2>
-        <hr>
+    <section class="chapter chapter--overview" id="overview" aria-labelledby="overview-title">
+      <header class="section-heading">
         <div>
-            <div class="list-group">
-                <a href="https://arxiv.org/pdf/2203.16421.pdf" 
-                   class="list-group-item">
-                    <img src="img/paper_thumbnails.png" style="width:100%; margin-right:-20px; margin-top:-10px;">
-                </a>
-            </div>
+          <span class="section-index">01 / Problem</span>
+          <h2 id="overview-title">See the part. Understand the motion.</h2>
         </div>
-    </div>
+        <p class="section-heading__aside">A single-view perception task for articulated 3D objects.</p>
+      </header>
 
-    <div class="section">
-        <h2>Download</h2>
-        <hr>
+      <figure class="hero-figure">
+        <div class="figure-label"><span>Task overview</span><span>Input → structured 3D motion</span></div>
+        <img src="img/input_output.png" alt="An input cabinet image followed by detected openable parts and predicted motion axes and origins across object categories" width="1652" height="340">
+      </figure>
+
+      <div class="overview-grid">
+        <div class="overview-copy">
+          <p class="lead-copy">
+            We address the task of predicting which parts of an object can open and how those parts move. Given one image, OPD detects every openable part and estimates the parameters that describe its articulation.
+          </p>
+          <p>
+            To study this problem, we introduce two complementary datasets: <strong>OPDSynth</strong>, built from existing synthetic objects, and <strong>OPDReal</strong>, built from RGB-D reconstructions of real objects. We also introduce <strong>OPDRCNN</strong>, a neural architecture that jointly detects openable parts and predicts their motion parameters.
+          </p>
+          <p>
+            The experiments expose a difficult generalization problem: a model must infer functional structure from limited visual evidence, often on object categories it did not see during training. OPDRCNN improves over prior work and baselines, especially when using RGB input.
+          </p>
+        </div>
+
+        <aside class="research-question">
+          <span class="research-question__label">Research question</span>
+          <blockquote>Can one image reveal both an object’s openable parts and the 3D motion that governs them?</blockquote>
+          <div class="research-question__meta">
+            <span>2 datasets</span>
+            <span>2 architectures</span>
+            <span>RGB · D · RGB-D</span>
+          </div>
+        </aside>
+      </div>
+
+      <div class="output-strip" aria-label="OPD model outputs">
+        <article>
+          <span class="output-strip__number">01</span>
+          <div><h3>Localize</h3><p>Find every openable part with a bounding box and segmentation mask.</p></div>
+        </article>
+        <article>
+          <span class="output-strip__number">02</span>
+          <div><h3>Classify</h3><p>Identify the part category and whether its motion is rotational or translational.</p></div>
+        </article>
+        <article>
+          <span class="output-strip__number">03</span>
+          <div><h3>Parameterize</h3><p>Recover a 3D motion axis and origin for each detected part.</p></div>
+        </article>
+      </div>
+    </section>
+
+    <section class="media-stage" id="video" aria-labelledby="video-title">
+      <header class="media-stage__header">
         <div>
-            <div class="download files">
-                <p>Below are datasets and pre-trained models for our three repos to download</p>
-                <a href="https://github.com/3dlg-hcvc/OPD">OPD Project</a> :&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/OPD/dataset.tar.gz">OPD Dataset</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/models/OPD/models.tar.gz">OPD Pre-trained Models</a> 
-                <br/>
-                <a href="https://github.com/3dlg-hcvc/OPDPN">OPDPN Baseline Project</a> :&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/OPDPN/dataset.tar.gz">OPDPN Dataset</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/models/OPDPN/models.tar.gz">OPDPN Pre-trained Models</a> 
-                <br/>
-                <a href="https://github.com/3dlg-hcvc/ANCSH-pytorch">ANCSH Baseline Project</a> :&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/ANCSH/dataset.tar.gz">ANCSH Dataset</a>&nbsp;&nbsp;&nbsp;&nbsp;
-                <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/models/ANCSH/models.tar.gz">ANCSH Pre-trained Models</a> 
-            </div>
+          <span class="section-index">Project film / Overview</span>
+          <h2 id="video-title">OPD, from task to results.</h2>
         </div>
-    </div>
+        <p>The task, datasets, model, and cross-category experiments—presented end to end.</p>
+      </header>
 
-    
-    <div class="section">
-        <h2>Bibtex</h2>
-        <hr>
-        <div class="bibtexsection">
-    @inproceedings{jiang2022opd,
-        title={OPD: Single-view 3D openable part detection},
-        author={Jiang, Hanxiao and Mao, Yongsen and Savva, Manolis and Chang, Angel X},
-        booktitle={Computer Vision--ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23--27, 2022, Proceedings, Part XXXIX},
-        pages={410--426},
-        year={2022},
-        organization={Springer}
+      <div class="video-frame">
+        <iframe src="https://www.youtube-nocookie.com/embed/P85iCaD0rfc" title="OPD project video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe>
+      </div>
+    </section>
+
+    <section class="chapter chapter--approach" id="approach" aria-labelledby="approach-title">
+      <header class="section-heading">
+        <div>
+          <span class="section-index">02 / Approach</span>
+          <h2 id="approach-title">From articulated objects to motion-aware predictions.</h2>
+        </div>
+        <p class="section-heading__aside">Two datasets and one unified detection architecture.</p>
+      </header>
+
+      <article class="figure-story">
+        <div class="figure-story__copy">
+          <span class="figure-story__index">Dataset / 01</span>
+          <h3>OPDSynth + OPDReal</h3>
+          <p>
+            OPDSynth covers varied part categories and kinematic structures at scale. OPDReal complements it with RGB-D reconstructions, semantic part annotations, and real-world appearance.
+          </p>
+          <ul class="tag-list" aria-label="Dataset characteristics">
+            <li>lid</li><li>drawer</li><li>door</li><li>synthetic</li><li>real</li>
+          </ul>
+        </div>
+        <figure class="scientific-figure">
+          <div class="figure-label"><span>Dataset composition</span><span>OPDSynth / OPDReal</span></div>
+          <img src="img/data_example.png" alt="Examples from OPDSynth and OPDReal, including lids, drawers, doors, cabinet kinematic structures, and reconstructed real objects" width="2266" height="860" loading="lazy">
+          <figcaption>Synthetic variation above; reconstructed real objects below.</figcaption>
+        </figure>
+      </article>
+
+      <article class="figure-story figure-story--reverse">
+        <div class="figure-story__copy">
+          <span class="figure-story__index">Architecture / 02</span>
+          <h3>OPDRCNN-C + OPDRCNN-O</h3>
+          <p>
+            Both architectures extend a Mask R-CNN backbone with motion heads. Alongside detection and segmentation, the network predicts motion type, 3D axis orientation, and motion origin for each openable part.
+          </p>
+          <ul class="tag-list" aria-label="Predicted outputs">
+            <li>box</li><li>mask</li><li>type</li><li>axis</li><li>origin</li>
+          </ul>
+        </div>
+        <figure class="scientific-figure">
+          <div class="figure-label"><span>Network architecture</span><span>Shared backbone + motion heads</span></div>
+          <img src="img/network.png" alt="Network architecture for OPDRCNN-C and OPDRCNN-O with Mask R-CNN detection and additional motion prediction heads" width="2276" height="744" loading="lazy">
+          <figcaption>Joint part detection, segmentation, and motion estimation.</figcaption>
+        </figure>
+      </article>
+    </section>
+
+    <section class="chapter chapter--resources" id="resources" aria-labelledby="resources-title">
+      <header class="section-heading">
+        <div>
+          <span class="section-index">03 / Open resources</span>
+          <h2 id="resources-title">Code, datasets, and pretrained models.</h2>
+        </div>
+        <p class="section-heading__aside">Everything needed to reproduce OPD and its baselines.</p>
+      </header>
+
+      <div class="resource-grid">
+        <article class="resource-card resource-card--featured">
+          <div class="resource-card__meta"><span>Main project</span><span>OPD</span></div>
+          <h3>OPDRCNN</h3>
+          <p>The full implementation, OPDSynth and OPDReal data, plus pretrained RGB, depth, and RGB-D models.</p>
+          <div class="resource-card__links">
+            <a href="https://github.com/3dlg-hcvc/OPD" target="_blank" rel="noopener noreferrer">Code <span aria-hidden="true">↗</span></a>
+            <a href="https://huggingface.co/datasets/Jianghanxiao/OPD/resolve/main/dataset.tar.gz" target="_blank" rel="noopener noreferrer">Dataset <span aria-hidden="true">↓</span></a>
+            <a href="https://huggingface.co/datasets/Jianghanxiao/OPD/resolve/main/models.tar.gz" target="_blank" rel="noopener noreferrer">Models <span aria-hidden="true">↓</span></a>
+          </div>
+        </article>
+
+        <article class="resource-card">
+          <div class="resource-card__meta"><span>Baseline</span><span>OPDPN</span></div>
+          <h3>OPDPN baseline</h3>
+          <p>The project implementation, prepared dataset, and pretrained models used for the OPDPN comparison.</p>
+          <div class="resource-card__links">
+            <a href="https://github.com/3dlg-hcvc/OPDPN" target="_blank" rel="noopener noreferrer">Code <span aria-hidden="true">↗</span></a>
+            <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/OPDPN/dataset.tar.gz">Dataset <span aria-hidden="true">↓</span></a>
+            <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/models/OPDPN/models.tar.gz">Models <span aria-hidden="true">↓</span></a>
+          </div>
+        </article>
+
+        <article class="resource-card">
+          <div class="resource-card__meta"><span>Baseline</span><span>ANCSH</span></div>
+          <h3>Category-level baseline</h3>
+          <p>Our PyTorch implementation of ANCSH with the converted dataset and pretrained comparison models.</p>
+          <div class="resource-card__links">
+            <a href="https://github.com/3dlg-hcvc/ANCSH-pytorch" target="_blank" rel="noopener noreferrer">Code <span aria-hidden="true">↗</span></a>
+            <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/dataset/ANCSH/dataset.tar.gz">Dataset <span aria-hidden="true">↓</span></a>
+            <a href="https://aspis.cmpt.sfu.ca/projects/motionnet/opd/models/ANCSH/models.tar.gz">Models <span aria-hidden="true">↓</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="chapter chapter--paper" id="paper" aria-labelledby="paper-title">
+      <header class="section-heading">
+        <div>
+          <span class="section-index">04 / Publication</span>
+          <h2 id="paper-title">Read the OPD paper.</h2>
+        </div>
+        <p class="section-heading__aside">Published at ECCV 2022 as an oral presentation.</p>
+      </header>
+
+      <div class="paper-grid paper-grid--single">
+        <a class="paper-preview" href="https://arxiv.org/pdf/2203.16421.pdf" target="_blank" rel="noopener noreferrer" aria-label="Open the OPD paper PDF">
+          <span class="paper-preview__label">ECCV 2022 / Paper</span>
+          <img src="img/paper_thumbnails.png" alt="Preview strip of pages from the OPD paper" width="1512" height="244" loading="lazy">
+          <span class="paper-preview__action">Open PDF <b aria-hidden="true">↗</b></span>
+        </a>
+      </div>
+    </section>
+
+    <section class="closing-card" aria-label="Acknowledgements and citation">
+      <section class="acknowledgements" aria-labelledby="acknowledgements-title">
+        <span class="section-index">Acknowledgements</span>
+        <div>
+          <h2 id="acknowledgements-title">Made possible by people and infrastructure.</h2>
+          <p>
+            This work was funded in part by a Canada CIFAR AI Chair, a Canada Research Chair, and an NSERC Discovery Grant, and enabled in part by support from <a href="https://www.westgrid.ca/" target="_blank" rel="noopener noreferrer">WestGrid</a> and <a href="https://www.computecanada.ca/" target="_blank" rel="noopener noreferrer">Compute Canada</a>.
+          </p>
+          <p>
+            We thank <a href="https://scholar.google.com/citations?user=boFO-7gAAAAJ&amp;hl=en" target="_blank" rel="noopener noreferrer">Sanjay Haresh</a> for scanning support and video narration; <a href="https://www.linkedin.com/in/yue-ruan-127a9a15b/" target="_blank" rel="noopener noreferrer">Yue Ruan</a> for scanning and data annotation; and <a href="https://supriya-gdptl.github.io/" target="_blank" rel="noopener noreferrer">Supriya Pandhre</a>, <a href="https://www.linkedin.com/in/xiaohao-sun-237537195/" target="_blank" rel="noopener noreferrer">Xiaohao Sun</a>, and Qirui Wu for annotation support.
+          </p>
+        </div>
+      </section>
+
+      <section class="citation-section" id="citation" aria-labelledby="citation-title">
+        <header class="section-heading">
+          <div>
+            <span class="section-index">05 / Citation</span>
+            <h2 id="citation-title">Cite OPD.</h2>
+          </div>
+          <p class="section-heading__aside">BibTeX for the ECCV 2022 publication.</p>
+        </header>
+
+        <div class="citation-panel">
+          <div class="citation-panel__header">
+            <span>BibTeX</span>
+            <button type="button" class="copy-button" data-copy-citation>Copy citation</button>
+          </div>
+          <pre id="bibtex"><code>@inproceedings{jiang2022opd,
+  title={OPD: Single-view 3D Openable Part Detection},
+  author={Jiang, Hanxiao and Mao, Yongsen and Savva, Manolis and Chang, Angel X.},
+  booktitle={Computer Vision--ECCV 2022: 17th European Conference, Tel Aviv, Israel, October 23--27, 2022, Proceedings, Part XXXIX},
+  pages={410--426},
+  year={2022},
+  organization={Springer}
+}</code></pre>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div>
+      <a class="footer-brand" href="#top"><span>OPD</span> / ECCV 2022</a>
+      <p>Single-view 3D Openable Part Detection</p>
+    </div>
+    <div class="site-footer__links">
+      <a href="mailto:shawn_jiang@sfu.ca">Contact</a>
+      <a href="https://github.com/3dlg-hcvc/OPD" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+      <a href="https://arxiv.org/abs/2203.16421" target="_blank" rel="noopener noreferrer">arXiv ↗</a>
+    </div>
+  </footer>
+
+  <script>
+    (() => {
+      const button = document.querySelector('[data-copy-citation]');
+      const citation = document.querySelector('#bibtex code');
+      if (!button || !citation) return;
+
+      button.addEventListener('click', async () => {
+        const originalLabel = button.textContent;
+        try {
+          await navigator.clipboard.writeText(citation.textContent);
+          button.textContent = 'Copied';
+        } catch (error) {
+          const range = document.createRange();
+          range.selectNodeContents(citation);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          button.textContent = 'Select + copy';
         }
-        </div>
-    </div>
-
-    <div class="section">
-        <h2>Acknowledgements</h2>
-        <hr>
-        <div class="acknowledgements">
-            This work was funded in part by a Canada CIFAR AI Chair, a Canada Research Chair and NSERC Discovery Grant, and enabled in part by support provided by <a href="www.westgrid.ca">WestGrid</a>
-            and <a href="www.computecanada.ca">Compute Canada</a>. 
-            We thank  <a href="https://scholar.google.com/citations?user=boFO-7gAAAAJ&hl=en">Sanjay Haresh</a> for help with scanning and narration for our video,
-            <a href="https://www.linkedin.com/in/yue-ruan-127a9a15b/">Yue Ruan</a> for scanning and data annotation, and <a href="https://supriya-gdptl.github.io/">Supriya Pandhre</a>, 
-            <a href="https://www.linkedin.com/in/xiaohao-sun-237537195/">Xiaohao Sun</a>, and Qirui Wu for help with annotation.
-        </div>
-    </div>
-
-    <hr>
-
-    <footer>
-        <p>Send feedback and questions to <a href="mailto: shawn_jiang@sfu.ca">Hanxiao Jiang</a>. Website template from <a href="https://www.vincentsitzmann.com/metasdf/">MetaSDF</a>. </p>
-    </footer>
-</div>
-
-
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
-        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
-        crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
-        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
-        crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"
-        integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI"
-        crossorigin="anonymous"></script>
-
+        window.setTimeout(() => { button.textContent = originalLabel; }, 1800);
+      });
+    })();
+  </script>
 </body>
 </html>
